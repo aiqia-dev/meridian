@@ -10,7 +10,7 @@ export GIT_VERSION=$(git describe --tags --abbrev=0)
 # GIT_COMMIT_SHORT - the short git commit number, like a718ef0.
 export GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
 # DOCKER_REPO - the base repository name to push the docker build to.
-export DOCKER_REPO=$DOCKER_USER/tile38
+export DOCKER_REPO=$DOCKER_USER/meridian
 
 if [ "$GIT_BRANCH" != "master" ]; then
 	echo "Not pushing, not on master"

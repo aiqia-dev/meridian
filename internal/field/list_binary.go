@@ -8,7 +8,7 @@ import (
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/pretty"
-	"github.com/tidwall/tile38/internal/sstring"
+	"github.com/aiqia-dev/meridian/internal/sstring"
 )
 
 // binary format

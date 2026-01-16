@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/tidwall/btree"
-	"github.com/tidwall/tile38/internal/collection"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/log"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/collection"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/log"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 const maxkeys = 8

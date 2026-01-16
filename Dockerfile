@@ -6,15 +6,15 @@ ARG TARGETARCH
 
 RUN apk add --no-cache ca-certificates
 
-ADD packages/tile38-$VERSION-$TARGETOS-$TARGETARCH/tile38-server /usr/local/bin
-ADD packages/tile38-$VERSION-$TARGETOS-$TARGETARCH/tile38-cli /usr/local/bin
-ADD packages/tile38-$VERSION-$TARGETOS-$TARGETARCH/tile38-benchmark /usr/local/bin
+ADD packages/meridian-$VERSION-$TARGETOS-$TARGETARCH/meridian-server /usr/local/bin
+ADD packages/meridian-$VERSION-$TARGETOS-$TARGETARCH/meridian-cli /usr/local/bin
+ADD packages/meridian-$VERSION-$TARGETOS-$TARGETARCH/meridian-benchmark /usr/local/bin
 
-RUN addgroup -S tile38 && \
-    adduser -S -G tile38 tile38 && \
-    mkdir /data && chown tile38:tile38 /data
+RUN addgroup -S meridian && \
+    adduser -S -G meridian meridian && \
+    mkdir /data && chown meridian:meridian /data
 
 VOLUME /data
 
 EXPOSE 9851
-CMD ["tile38-server", "-d", "/data"]
+CMD ["meridian-server", "-d", "/data"]

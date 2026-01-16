@@ -9,9 +9,9 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/match"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/log"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/log"
+	"github.com/aiqia-dev/meridian/internal/object"
 	"github.com/tidwall/tinylru"
 )
 

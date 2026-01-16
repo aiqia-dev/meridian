@@ -16,7 +16,7 @@ import (
 
 	"github.com/tidwall/geojson/geo"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 	"github.com/tidwall/tinylru"
 	lua "github.com/yuin/gopher-lua"
 	luajson "layeh.com/gopher-json"
@@ -137,7 +137,7 @@ func (pl *lStatePool) New() *lua.LState {
 	call := func(ls *lua.LState) int {
 		evalCmd, args := getArgs(ls)
 		var numRet int
-		if res, err := pl.s.luaTile38Call(evalCmd, args[0], args[1:]...); err != nil {
+		if res, err := pl.s.luaMeridianCall(evalCmd, args[0], args[1:]...); err != nil {
 			ls.RaiseError("ERR %s", err.Error())
 			numRet = 0
 		} else {
@@ -148,7 +148,7 @@ func (pl *lStatePool) New() *lua.LState {
 	}
 	pcall := func(ls *lua.LState) int {
 		evalCmd, args := getArgs(ls)
-		if res, err := pl.s.luaTile38Call(evalCmd, args[0], args[1:]...); err != nil {
+		if res, err := pl.s.luaMeridianCall(evalCmd, args[0], args[1:]...); err != nil {
 			ls.Push(ConvertToLua(ls, resp.ErrorValue(err)))
 		} else {
 			ls.Push(ConvertToLua(ls, res))
@@ -190,7 +190,7 @@ func (pl *lStatePool) New() *lua.LState {
 		"sha1hex":      sha1hex,
 		"distance_to":  distanceTo,
 	}
-	L.SetGlobal("tile38", L.SetFuncs(L.NewTable(), exports))
+	L.SetGlobal("meridian", L.SetFuncs(L.NewTable(), exports))
 
 	// Load json
 	L.SetGlobal("json", L.Get(luajson.Loader(L)))
@@ -690,7 +690,7 @@ func (s *Server) commandInScript(msg *Message) (
 	return
 }
 
-func (s *Server) luaTile38Call(evalcmd string, cmd string, args ...string) (resp.Value, error) {
+func (s *Server) luaMeridianCall(evalcmd string, cmd string, args ...string) (resp.Value, error) {
 	msg := &Message{}
 	msg.OutputType = RESP
 	msg.Args = append([]string{cmd}, args...)
@@ -713,18 +713,18 @@ func (s *Server) luaTile38Call(evalcmd string, cmd string, args ...string) (resp
 
 	switch evalcmd {
 	case "eval", "evalsha":
-		return s.luaTile38AtomicRW(msg)
+		return s.luaMeridianAtomicRW(msg)
 	case "evalro", "evalrosha":
-		return s.luaTile38AtomicRO(msg)
+		return s.luaMeridianAtomicRO(msg)
 	case "evalna", "evalnasha":
-		return s.luaTile38NonAtomic(msg)
+		return s.luaMeridianNonAtomic(msg)
 	}
 
 	return resp.NullValue(), errCmdNotSupported
 }
 
 // The eval command has already got the lock. No locking on the call from within the script.
-func (s *Server) luaTile38AtomicRW(msg *Message) (resp.Value, error) {
+func (s *Server) luaMeridianAtomicRW(msg *Message) (resp.Value, error) {
 	var write bool
 
 	switch msg.Command() {
@@ -783,7 +783,7 @@ func (s *Server) luaTile38AtomicRW(msg *Message) (resp.Value, error) {
 	return res, nil
 }
 
-func (s *Server) luaTile38AtomicRO(msg *Message) (resp.Value, error) {
+func (s *Server) luaMeridianAtomicRO(msg *Message) (resp.Value, error) {
 	switch msg.Command() {
 	default:
 		return resp.NullValue(), errCmdNotSupported
@@ -825,7 +825,7 @@ func (s *Server) luaTile38AtomicRO(msg *Message) (resp.Value, error) {
 	return res, nil
 }
 
-func (s *Server) luaTile38NonAtomic(msg *Message) (resp.Value, error) {
+func (s *Server) luaMeridianNonAtomic(msg *Message) (resp.Value, error) {
 	var write bool
 
 	// choose the locking strategy

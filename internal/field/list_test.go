@@ -223,7 +223,7 @@ func TestJSONGet(t *testing.T) {
 		t.Fatalf("expected '%s', got '%s'",
 			`fancy`, data)
 	}
-	// Tile38 defaults non-existent fields to zero.
+	// Meridian defaults non-existent fields to zero.
 	data = list.Get("belly.a.b.c.d").Value().Data()
 	if data != `0` {
 		t.Fatalf("expected '%s', got '%s'",

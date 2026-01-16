@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/collection"
-	"github.com/tidwall/tile38/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/collection"
+	"github.com/aiqia-dev/meridian/internal/glob"
 )
 
 // KEYS pattern

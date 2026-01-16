@@ -480,7 +480,7 @@ func keys_WITHIN_SECTOR_test(mc *mockServer) error {
 }
 
 func keys_NEARBY_SPARSE_test(mc *mockServer) error {
-	// https://github.com/tidwall/tile38/issues/618
+	// https://github.com/aiqia-dev/meridian/issues/618
 	return mc.DoBatch([][]interface{}{
 		{"SET", "location", "379", "FIELD", "story", "214", "POINT", "38.343763352486", "-0.48118065817742"}, {"OK"},
 		{"SET", "location", "380", "FIELD", "story", "216", "POINT", "38.343210451684", "-0.48164476701469"}, {"OK"},

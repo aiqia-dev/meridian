@@ -14,7 +14,7 @@ const (
 	yellow = "\x1b[33m"
 )
 
-// Command represents a Tile38 command.
+// Command represents a Meridian command.
 type Command struct {
 	Name       string     `json:"-"`
 	Summary    string     `json:"summary"`

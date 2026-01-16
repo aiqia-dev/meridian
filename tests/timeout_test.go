@@ -130,8 +130,8 @@ func timeout_within_scripts_test(mc *mockServer) (err error) {
 		return err
 	}
 
-	script1 := "return tile38.call('timeout', 10, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
-	script2 := "return tile38.call('timeout', 0.000001, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
+	script1 := "return meridian.call('timeout', 10, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
+	script2 := "return meridian.call('timeout', 0.000001, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
 	sha1 := "27a364b4e46ef493f6b70371086c286e2d5b5f49"
 	sha2 := "2da9c05b54abfe870bdc8383a143f9d3aa656192"
 
@@ -157,8 +157,8 @@ func scriptTimeoutNotSupportedErr(v interface{}) (resp, expect interface{}) {
 }
 
 func timeout_no_writes_within_scripts_test(mc *mockServer) (err error) {
-	script1 := "return tile38.call('SET', 'mykey', 'myval', 'STRING', 'foo')"
-	script2 := "return tile38.call('timeout', 10, 'SET', 'mykey', 'myval', 'STRING', 'foo')"
+	script1 := "return meridian.call('SET', 'mykey', 'myval', 'STRING', 'foo')"
+	script2 := "return meridian.call('timeout', 10, 'SET', 'mykey', 'myval', 'STRING', 'foo')"
 	sha1 := "393d0adff113fdda45e3b5aff93c188c30099f48"
 	sha2 := "5287c158d15eb53d800b7389d82df0d73b004bf1"
 

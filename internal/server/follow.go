@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 var errNoLongerFollowing = errors.New("no longer following")

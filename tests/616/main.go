@@ -1,4 +1,4 @@
-// Test Tile38 for Expiration Drift
+// Test Meridian for Expiration Drift
 // Issue #616
 
 package main

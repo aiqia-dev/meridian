@@ -13,9 +13,9 @@ import (
 	"github.com/tidwall/buntdb"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/endpoint"
-	"github.com/tidwall/tile38/internal/glob"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/endpoint"
+	"github.com/aiqia-dev/meridian/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 var hookLogSetDefaults = &buntdb.SetOptions{
