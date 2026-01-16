@@ -20,14 +20,14 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/tile38/internal/server"
+	"github.com/aiqia-dev/meridian/internal/server"
 )
 
-const tile38Port = 9191
+const meridianPort = 9191
 const httpPort = 9292
 const dir = "data"
 
-var tile38Addr string
+var meridianAddr string
 var httpAddr string
 
 var wd string
@@ -40,10 +40,10 @@ var pool = &redis.Pool{
 	MaxIdle:     3,
 	IdleTimeout: 240 * time.Second,
 	Dial: func() (redis.Conn, error) {
-		return redis.Dial("tcp", tile38Addr)
+		return redis.Dial("tcp", meridianAddr)
 	},
 }
-var providedTile38 bool
+var providedMeridian bool
 var providedHTTP bool
 
 const blank = false
@@ -52,17 +52,17 @@ const hookServer = true
 var logf *os.File
 
 func main() {
-	flag.StringVar(&tile38Addr, "tile38", "",
-		"Tile38 address, leave blank to start a new server")
+	flag.StringVar(&meridianAddr, "meridian", "",
+		"Meridian address, leave blank to start a new server")
 	flag.StringVar(&httpAddr, "hook", "",
 		"Hook HTTP url, leave blank to start a new server")
 	flag.Parse()
 	log.Println("mockfill-107 (Github #107: Memory leak)")
 
-	if tile38Addr == "" {
-		tile38Addr = "127.0.0.1:" + strconv.FormatInt(int64(tile38Port), 10)
+	if meridianAddr == "" {
+		meridianAddr = "127.0.0.1:" + strconv.FormatInt(int64(meridianPort), 10)
 	} else {
-		providedTile38 = true
+		providedMeridian = true
 	}
 	if httpAddr == "" {
 		httpAddr = "http://127.0.0.1:" + strconv.FormatInt(int64(httpPort), 10) + "/hook"
@@ -79,9 +79,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer logf.Close()
-	if !providedTile38 {
+	if !providedMeridian {
 		copyAOF()
-		go startTile38Server()
+		go startMeridianServer()
 	}
 	if !providedHTTP {
 		if hookServer {
@@ -98,11 +98,11 @@ func main() {
 	return
 }
 
-func startTile38Server() {
-	log.Println("start tile38 server")
+func startMeridianServer() {
+	log.Println("start meridian server")
 	opts := server.Options{
 		Host:        "localhost",
-		Port:        tile38Port,
+		Port:        meridianPort,
 		Dir:         "data",
 		UseHTTP:     false,
 		MetricsAddr: "",
@@ -185,7 +185,7 @@ func waitForServers(cb func()) {
 
 func downloadAOF() {
 	log.Println("downloading aof")
-	resp, err := http.Get("https://github.com/tidwall/tile38/files/675225/appendonly.aof.zip")
+	resp, err := http.Get("https://github.com/aiqia-dev/meridian/files/675225/appendonly.aof.zip")
 	if err != nil {
 		log.Fatal(err)
 	}

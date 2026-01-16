@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 func (s *Server) cmdScanArgs(vs []string) (

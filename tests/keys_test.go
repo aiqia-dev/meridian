@@ -746,7 +746,7 @@ func keys_SERVER_test(mc *mockServer) error {
 		Do("SERVER", "ext").Func(func(s string) error {
 			valid := strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]") &&
 				strings.Contains(s, "sys_cpus") &&
-				strings.Contains(s, "tile38_connected_clients")
+				strings.Contains(s, "meridian_connected_clients")
 
 			if !valid {
 				return errors.New("looks invalid")
@@ -758,7 +758,7 @@ func keys_SERVER_test(mc *mockServer) error {
 				return errors.New("not ok")
 			}
 			valid := gjson.Get(s, "stats.sys_cpus").Exists() &&
-				gjson.Get(s, "stats.tile38_connected_clients").Exists()
+				gjson.Get(s, "stats.meridian_connected_clients").Exists()
 			if !valid {
 				return errors.New("looks invalid")
 			}
@@ -809,7 +809,7 @@ func keys_INFO_test(mc *mockServer) error {
 			return nil
 		}),
 		Do("INFO").JSON().Func(func(s string) error {
-			if gjson.Get(s, "info.tile38_version").String() == "" {
+			if gjson.Get(s, "info.meridian_version").String() == "" {
 				return errors.New("looks invalid")
 			}
 			return nil

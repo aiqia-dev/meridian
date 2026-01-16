@@ -1,6 +1,6 @@
 .DS_Store
-tile38-*
-!cmd/tile38-*
+meridian-*
+!cmd/meridian-*
 *.test
 data*/
 coverage.out

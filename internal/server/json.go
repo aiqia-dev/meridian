@@ -11,9 +11,9 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/resp"
 	"github.com/tidwall/sjson"
-	"github.com/tidwall/tile38/internal/collection"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/collection"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 func appendJSONString(b []byte, s string) []byte {

@@ -1,7 +1,7 @@
-## Tile38 Integration Testing
+## Meridian Integration Testing
 
 - Uses Redis protocol
-- The Tile38 data is flushed before every `DoBatch`
+- The Meridian data is flushed before every `DoBatch`
 
 A basic test operation looks something like:
 

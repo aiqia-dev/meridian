@@ -13,11 +13,11 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/bing"
-	"github.com/tidwall/tile38/internal/buffer"
-	"github.com/tidwall/tile38/internal/clip"
-	"github.com/tidwall/tile38/internal/glob"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/bing"
+	"github.com/aiqia-dev/meridian/internal/buffer"
+	"github.com/aiqia-dev/meridian/internal/clip"
+	"github.com/aiqia-dev/meridian/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 const defaultCircleSteps = 64

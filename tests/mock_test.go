@@ -14,8 +14,8 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/tidwall/sjson"
-	"github.com/tidwall/tile38/internal/log"
-	"github.com/tidwall/tile38/internal/server"
+	"github.com/aiqia-dev/meridian/internal/log"
+	"github.com/aiqia-dev/meridian/internal/server"
 )
 
 var errTimeout = errors.New("timeout")

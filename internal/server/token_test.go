@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tidwall/tile38/internal/field"
+	"github.com/aiqia-dev/meridian/internal/field"
 )
 
 func TestLowerCompare(t *testing.T) {

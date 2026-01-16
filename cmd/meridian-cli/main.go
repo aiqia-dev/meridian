@@ -19,7 +19,7 @@ import (
 	"github.com/peterh/liner"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/core"
+	"github.com/aiqia-dev/meridian/core"
 )
 
 func getEnv(name string, defaultValue string) string {
@@ -69,8 +69,8 @@ func showHelp() bool {
 	} else {
 		gitsha = " (git:" + core.GitSHA + ")"
 	}
-	fmt.Fprintf(os.Stdout, "tile38-cli %s%s\n\n", core.Version, gitsha)
-	fmt.Fprintf(os.Stdout, "Usage: tile38-cli [OPTIONS] [cmd [arg [arg ...]]]\n")
+	fmt.Fprintf(os.Stdout, "meridian-cli %s%s\n\n", core.Version, gitsha)
+	fmt.Fprintf(os.Stdout, "Usage: meridian-cli [OPTIONS] [cmd [arg [arg ...]]]\n")
 	fmt.Fprintf(os.Stdout, " --raw              Use raw formatting for replies\n")
 	fmt.Fprintf(os.Stdout, " --noprompt         Do not display a prompt\n")
 	fmt.Fprintf(os.Stdout, " --resp             Use RESP output formatting (default is JSON output)\n")
@@ -91,9 +91,9 @@ func parseArgs() bool {
 		}
 	}()
 
-	hostname = getEnv("TILE38_HOSTNAME", hostname)
-	output = getEnv("TILE38_OUTPUT", output)
-	portStr := getEnv("TILE38_PORT", "")
+	hostname = getEnv("MERIDIAN_HOSTNAME", hostname)
+	output = getEnv("MERIDIAN_OUTPUT", output)
+	portStr := getEnv("MERIDIAN_PORT", "")
 
 	if portStr != "" {
 		tempPort, err := strconv.Atoi(portStr)
@@ -169,7 +169,7 @@ func parseArgs() bool {
 }
 
 func refusedErrorString(addr string) string {
-	return fmt.Sprintf("Could not connect to Tile38 at %s: Connection refused", addr)
+	return fmt.Sprintf("Could not connect to Meridian at %s: Connection refused", addr)
 }
 
 var groupsM = make(map[string][]string)
@@ -306,7 +306,7 @@ func main() {
 		}
 	}()
 
-	password := getEnv("TILE38_PASSWORD", "")
+	password := getEnv("MERIDIAN_PASSWORD", "")
 
 	if conn != nil && password != "" {
 		conn.Do(fmt.Sprintf("auth %s", password))
@@ -523,7 +523,7 @@ func help(arg string) error {
 	groups := "Groups: " + strings.Join(groupsA, ", ") + "\n"
 
 	if arg == "" {
-		fmt.Fprintf(os.Stderr, "tile38-cli %s (git:%s)\n", core.Version, core.GitSHA)
+		fmt.Fprintf(os.Stderr, "meridian-cli %s (git:%s)\n", core.Version, core.GitSHA)
 		fmt.Fprintf(os.Stderr, `Type:   "help @<group>" to get a list of commands in <group>`+"\n")
 		fmt.Fprintf(os.Stderr, `        "help <command>" for help on <command>`+"\n")
 		if !(noprompt && tty) {
@@ -669,7 +669,7 @@ func (c *client) readLiveResp() (message []byte, err error) {
 }
 
 // plainToCompat converts a plain message like "SET fleet truck1 ..."  into a
-// Tile38 compatible blob.
+// Meridian compatible blob.
 func plainToCompat(message string) []byte {
 	var args []string
 	// search for the beginning of the first argument

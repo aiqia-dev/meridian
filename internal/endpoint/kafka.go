@@ -13,7 +13,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 const kafkaExpiresAfter = time.Second * 30

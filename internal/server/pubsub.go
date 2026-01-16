@@ -11,7 +11,7 @@ import (
 	"github.com/tidwall/match"
 	"github.com/tidwall/redcon"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 const (

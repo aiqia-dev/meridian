@@ -10,9 +10,9 @@ import (
 	"github.com/tidwall/geojson/geo"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/glob"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 // FenceMatch executes a fence match returns back json messages for fence detection.

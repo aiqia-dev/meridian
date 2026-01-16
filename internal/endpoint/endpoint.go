@@ -662,7 +662,7 @@ func parseEndpoint(s string) (Endpoint, error) {
 	// Mandatory - false
 	// Immeditate - false
 	// Durable - true
-	// Routing-Key - tile38
+	// Routing-Key - meridian
 	//
 	// - "route" - [string] routing key
 	//
@@ -733,7 +733,7 @@ func parseEndpoint(s string) (Endpoint, error) {
 		}
 
 		if endpoint.AMQP.RouteKey == "" {
-			endpoint.AMQP.RouteKey = "tile38"
+			endpoint.AMQP.RouteKey = "meridian"
 		}
 	}
 
