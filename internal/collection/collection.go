@@ -8,9 +8,9 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/rtree"
-	"github.com/tidwall/tile38/internal/deadline"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/deadline"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 // yieldStep forces the iterator to yield goroutine every 256 steps.
@@ -410,7 +410,7 @@ func (c *Collection) geoSearch(
 	min, max := rtreeRect(rect)
 
 	// avoid search if NaN present as it results in full search
-	// https://github.com/tidwall/tile38/issues/793
+	// https://github.com/aiqia-dev/meridian/issues/793
 	if math.IsNaN(float64(min[0])) && math.IsNaN(float64(min[1])) &&
 		math.IsNaN(float64(max[0])) && math.IsNaN(float64(max[1])) {
 		return alive

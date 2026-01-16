@@ -6,7 +6,7 @@ import (
 	"github.com/tidwall/assert"
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
-	"github.com/tidwall/tile38/internal/field"
+	"github.com/aiqia-dev/meridian/internal/field"
 )
 
 func P(x, y float64) geojson.Object {

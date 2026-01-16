@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 const disqueExpiresAfter = time.Second * 30

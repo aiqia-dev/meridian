@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tidwall/tile38/core"
-	"github.com/tidwall/tile38/internal/collection"
+	"github.com/aiqia-dev/meridian/core"
+	"github.com/aiqia-dev/meridian/internal/collection"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -18,38 +18,38 @@ var (
 			these metrics are taken from basicStats() / extStats()
 			by accessing the map and directly exporting the value found
 		*/
-		"num_collections":          prometheus.NewDesc("tile38_collections", "Total number of collections", nil, nil),
-		"pid":                      prometheus.NewDesc("tile38_pid", "", nil, nil),
-		"aof_size":                 prometheus.NewDesc("tile38_aof_size_bytes", "", nil, nil),
-		"num_hooks":                prometheus.NewDesc("tile38_hooks", "", nil, nil),
-		"in_memory_size":           prometheus.NewDesc("tile38_in_memory_size_bytes", "", nil, nil),
-		"heap_size":                prometheus.NewDesc("tile38_heap_size_bytes", "", nil, nil),
-		"heap_released":            prometheus.NewDesc("tile38_memory_reap_released_bytes", "", nil, nil),
-		"max_heap_size":            prometheus.NewDesc("tile38_memory_max_heap_size_bytes", "", nil, nil),
-		"avg_item_size":            prometheus.NewDesc("tile38_avg_item_size_bytes", "", nil, nil),
-		"pointer_size":             prometheus.NewDesc("tile38_pointer_size_bytes", "", nil, nil),
-		"cpus":                     prometheus.NewDesc("tile38_num_cpus", "", nil, nil),
-		"tile38_connected_clients": prometheus.NewDesc("tile38_connected_clients", "", nil, nil),
+		"num_collections":          prometheus.NewDesc("meridian_collections", "Total number of collections", nil, nil),
+		"pid":                      prometheus.NewDesc("meridian_pid", "", nil, nil),
+		"aof_size":                 prometheus.NewDesc("meridian_aof_size_bytes", "", nil, nil),
+		"num_hooks":                prometheus.NewDesc("meridian_hooks", "", nil, nil),
+		"in_memory_size":           prometheus.NewDesc("meridian_in_memory_size_bytes", "", nil, nil),
+		"heap_size":                prometheus.NewDesc("meridian_heap_size_bytes", "", nil, nil),
+		"heap_released":            prometheus.NewDesc("meridian_memory_reap_released_bytes", "", nil, nil),
+		"max_heap_size":            prometheus.NewDesc("meridian_memory_max_heap_size_bytes", "", nil, nil),
+		"avg_item_size":            prometheus.NewDesc("meridian_avg_item_size_bytes", "", nil, nil),
+		"pointer_size":             prometheus.NewDesc("meridian_pointer_size_bytes", "", nil, nil),
+		"cpus":                     prometheus.NewDesc("meridian_num_cpus", "", nil, nil),
+		"meridian_connected_clients": prometheus.NewDesc("meridian_connected_clients", "", nil, nil),
 
-		"tile38_total_connections_received": prometheus.NewDesc("tile38_connections_received_total", "", nil, nil),
-		"tile38_total_messages_sent":        prometheus.NewDesc("tile38_messages_sent_total", "", nil, nil),
-		"tile38_expired_keys":               prometheus.NewDesc("tile38_expired_keys_total", "", nil, nil),
+		"meridian_total_connections_received": prometheus.NewDesc("meridian_connections_received_total", "", nil, nil),
+		"meridian_total_messages_sent":        prometheus.NewDesc("meridian_messages_sent_total", "", nil, nil),
+		"meridian_expired_keys":               prometheus.NewDesc("meridian_expired_keys_total", "", nil, nil),
 
 		/*
 			these metrics are NOT taken from basicStats() / extStats()
 			but are calculated independently
 		*/
-		"collection_objects": prometheus.NewDesc("tile38_collection_objects", "Total number of objects per collection", []string{"col"}, nil),
-		"collection_points":  prometheus.NewDesc("tile38_collection_points", "Total number of points per collection", []string{"col"}, nil),
-		"collection_strings": prometheus.NewDesc("tile38_collection_strings", "Total number of strings per collection", []string{"col"}, nil),
-		"collection_weight":  prometheus.NewDesc("tile38_collection_weight_bytes", "Total weight of collection in bytes", []string{"col"}, nil),
-		"server_info":        prometheus.NewDesc("tile38_server_info", "Server info", []string{"id", "version"}, nil),
-		"replication":        prometheus.NewDesc("tile38_replication_info", "Replication info", []string{"role", "following", "caught_up", "caught_up_once"}, nil),
-		"start_time":         prometheus.NewDesc("tile38_start_time_seconds", "", nil, nil),
+		"collection_objects": prometheus.NewDesc("meridian_collection_objects", "Total number of objects per collection", []string{"col"}, nil),
+		"collection_points":  prometheus.NewDesc("meridian_collection_points", "Total number of points per collection", []string{"col"}, nil),
+		"collection_strings": prometheus.NewDesc("meridian_collection_strings", "Total number of strings per collection", []string{"col"}, nil),
+		"collection_weight":  prometheus.NewDesc("meridian_collection_weight_bytes", "Total weight of collection in bytes", []string{"col"}, nil),
+		"server_info":        prometheus.NewDesc("meridian_server_info", "Server info", []string{"id", "version"}, nil),
+		"replication":        prometheus.NewDesc("meridian_replication_info", "Replication info", []string{"role", "following", "caught_up", "caught_up_once"}, nil),
+		"start_time":         prometheus.NewDesc("meridian_start_time_seconds", "", nil, nil),
 	}
 
 	cmdDurations = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name:       "tile38_cmd_duration_seconds",
+		Name:       "meridian_cmd_duration_seconds",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.95: 0.005, 0.99: 0.001},
 	}, []string{"cmd"},
 	)

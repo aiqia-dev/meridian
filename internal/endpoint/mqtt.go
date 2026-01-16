@@ -10,7 +10,7 @@ import (
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/log"
 )
 
 const (
@@ -100,7 +100,7 @@ func (conn *MQTTConn) Send(msg string) error {
 			log.Debugf("Failed to generate guid for the mqtt client. The endpoint will not work")
 			return err
 		}
-		uuid := fmt.Sprintf("tile38-%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+		uuid := fmt.Sprintf("meridian-%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 
 		ops = ops.SetClientID(uuid).AddBroker(uri)
 		c := paho.NewClient(ops)

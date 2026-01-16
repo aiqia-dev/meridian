@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/log"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/log"
 	lua "github.com/yuin/gopher-lua"
 	luajson "layeh.com/gopher-json"
 )

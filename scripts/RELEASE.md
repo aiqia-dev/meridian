@@ -1,4 +1,4 @@
-**To bump a new release of Tile38**
+**To bump a new release of AIQIA Meridian**
 
 - Update CHANGELOG.md to include the newest changes.
 - `git commit -m $vers` changes (where `$vers` is a semver)

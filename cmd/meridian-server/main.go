@@ -18,10 +18,10 @@ import (
 	"syscall"
 
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/tile38/core"
-	"github.com/tidwall/tile38/internal/hservice"
-	"github.com/tidwall/tile38/internal/log"
-	"github.com/tidwall/tile38/internal/server"
+	"github.com/aiqia-dev/meridian/core"
+	"github.com/aiqia-dev/meridian/internal/hservice"
+	"github.com/aiqia-dev/meridian/internal/log"
+	"github.com/aiqia-dev/meridian/internal/server"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -34,7 +34,7 @@ var httpTransport = true
 //
 // Fire up a webhook test server by using the --webhook-http-consumer-port
 // for example
-//   $ ./tile38-server --webhook-http-consumer-port 9999
+//   $ ./meridian-server --webhook-http-consumer-port 9999
 //
 // The create hooks like such...
 //   SETHOOK myhook http://localhost:9999/myhook NEARBY mykey FENCE POINT 33.5 -115.5 1000
@@ -43,7 +43,7 @@ var httpTransport = true
 //
 // Memory profiling - start the server with the -pprofport flag
 //
-//   $ ./tile38-server -pprofport 6060
+//   $ ./meridian-server -pprofport 6060
 //
 // Then, at any point, from a different terminal execute:
 //   $ go tool pprof -svg http://localhost:6060/debug/pprof/heap > out.svg
@@ -63,14 +63,14 @@ func main() {
 	if gitsha == " (0000000)" {
 		gitsha = ""
 	}
-	versionLine := `tile38-server version: ` + core.Version + gitsha
+	versionLine := `meridian-server version: ` + core.Version + gitsha
 
 	output := os.Stderr
 	flag.Usage = func() {
 		fmt.Fprintf(output,
 			"%s", versionLine+`
 
-Usage: tile38-server [-p port]
+Usage: meridian-server [-p port]
 
 Basic Options:
   -h hostname : listening host
@@ -158,7 +158,7 @@ Developer Options:
 		// ShowDebugMessages allows for log.Debug to print to console.
 		showDebugMessages = false
 
-		// ProtectedMode forces Tile38 to default in protected mode.
+		// ProtectedMode forces Meridian to default in protected mode.
 		protectedMode = "no"
 
 		// AppendOnly allows for disabling the appendonly file.
@@ -468,14 +468,18 @@ Developer Options:
 	}
 
 	if log.LogJSON() {
-		log.Printf(`Tile38 %s%s %d bit (%s/%s) %s%s, PID: %d. Visit tile38.com/sponsor to support the project`,
+		log.Printf(`AIQIA Meridian %s%s %d bit (%s/%s) %s%s, PID: %d`,
 			core.Version, gitsha, strconv.IntSize, runtime.GOARCH, runtime.GOOS, hostd, saddr, os.Getpid())
 	} else {
 		fmt.Fprintf(logw, `
-   _____ _ _     ___ ___
-  |_   _|_| |___|_  | . |  Tile38 %s%s %d bit (%s/%s)
-    | | | | | -_|_  | . |  %s%s, PID: %d
-    |_| |_|_|___|___|___|  tile38.com
+    __  __           _     _ _
+   |  \/  | ___ _ __(_) __| (_) __ _ _ __
+   | |\/| |/ _ \ '__| |/ _' | |/ _' | '_ \
+   | |  | |  __/ |  | | (_| | | (_| | | | |
+   |_|  |_|\___|_|  |_|\__,_|_|\__,_|_| |_|
+
+   AIQIA Meridian %s%s %d bit (%s/%s)
+   %s%s, PID: %d
 
 `, core.Version, gitsha, strconv.IntSize, runtime.GOARCH, runtime.GOOS, hostd,
 			saddr, os.Getpid())

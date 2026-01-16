@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Tile38 Map Viewer</title>
+<title>Meridian Map Viewer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
 <style>
@@ -68,7 +68,7 @@ window.addEventListener("load", function() {
 <body>
 <table width="100%" height="100%">
 <tr><td id="controls">
-<a href="https://tile38.com"><img src="/viewer/logo.png" height="40" valign="middle"></a>
+<a href="#"><img src="/viewer/logo.png" height="40" valign="middle"></a>
 Choose Collection:
 <span id="collist"></span>
 </td></tr>
@@ -114,7 +114,7 @@ function loadlayer(key) {
     'id': key+'-circle-layer',
     'type': 'circle',
     'source': key+'-source',
-    'source-layer': 'tile38',
+    'source-layer': 'meridian',
     'paint': {
       'circle-radius': 5,
       'circle-color': 'red',
@@ -126,7 +126,7 @@ function loadlayer(key) {
     'id': key+'-fill-layer',
     'type': 'fill',
     'source': key+'-source',
-    'source-layer': 'tile38',
+    'source-layer': 'meridian',
     'paint': {
       'fill-color': '#00ff',
       'fill-opacity': 0.5

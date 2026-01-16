@@ -19,10 +19,10 @@ fi
 if [ -d ".git" ]; then
 	VERSION=$(git describe --tags --abbrev=0)
 	GITSHA=$(git rev-parse --short HEAD)
-	LDFLAGS="$LDFLAGS -X github.com/tidwall/tile38/core.Version=${VERSION}"
-	LDFLAGS="$LDFLAGS -X github.com/tidwall/tile38/core.GitSHA=${GITSHA}"
+	LDFLAGS="$LDFLAGS -X github.com/aiqia-dev/meridian/core.Version=${VERSION}"
+	LDFLAGS="$LDFLAGS -X github.com/aiqia-dev/meridian/core.GitSHA=${GITSHA}"
 fi
-LDFLAGS="$LDFLAGS -X github.com/tidwall/tile38/core.BuildTime=$(date +%FT%T%z)"
+LDFLAGS="$LDFLAGS -X github.com/aiqia-dev/meridian/core.BuildTime=$(date +%FT%T%z)"
 
 # Generate the core package
 core/gen.sh

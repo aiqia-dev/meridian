@@ -1,4 +1,4 @@
-module github.com/tidwall/tile38
+module github.com/aiqia-dev/meridian
 
 go 1.24.0
 

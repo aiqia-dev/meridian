@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tidwall/tile38/internal/hservice"
+	"github.com/aiqia-dev/meridian/internal/hservice"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

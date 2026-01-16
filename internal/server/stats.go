@@ -15,8 +15,8 @@ import (
 
 	"github.com/tidwall/buntdb"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/core"
-	"github.com/tidwall/tile38/internal/collection"
+	"github.com/aiqia-dev/meridian/core"
+	"github.com/aiqia-dev/meridian/internal/collection"
 )
 
 var memStats runtime.MemStats
@@ -291,58 +291,58 @@ func (s *Server) extStats(m map[string]interface{}) {
 	// Tile38 Stats
 
 	// ID of the server
-	m["tile38_id"] = s.config.serverID()
+	m["meridian_id"] = s.config.serverID()
 	// The process ID of the server
-	m["tile38_pid"] = os.Getpid()
+	m["meridian_pid"] = os.Getpid()
 	// Version of Tile38 running
-	m["tile38_version"] = core.Version
+	m["meridian_version"] = core.Version
 	// Maximum heap size allowed
-	m["tile38_max_heap_size"] = s.config.maxMemory()
+	m["meridian_max_heap_size"] = s.config.maxMemory()
 	// Type of instance running
 	if s.config.followHost() == "" {
-		m["tile38_type"] = "leader"
+		m["meridian_type"] = "leader"
 	} else {
-		m["tile38_type"] = "follower"
+		m["meridian_type"] = "follower"
 	}
 	// Whether or not the server is read-only
-	m["tile38_read_only"] = s.config.readOnly()
+	m["meridian_read_only"] = s.config.readOnly()
 	// Size of pointer
-	m["tile38_pointer_size"] = (32 << uintptr(uint64(^uintptr(0))>>63)) / 8
+	m["meridian_pointer_size"] = (32 << uintptr(uint64(^uintptr(0))>>63)) / 8
 	// Uptime of the Tile38 server in seconds
-	m["tile38_uptime_in_seconds"] = time.Since(s.started).Seconds()
+	m["meridian_uptime_in_seconds"] = time.Since(s.started).Seconds()
 	// Number of currently connected Tile38 clients
 	s.connsmu.RLock()
-	m["tile38_connected_clients"] = len(s.conns)
+	m["meridian_connected_clients"] = len(s.conns)
 	s.connsmu.RUnlock()
 	// Whether or not a cluster is enabled
-	m["tile38_cluster_enabled"] = false
+	m["meridian_cluster_enabled"] = false
 	// Whether or not the Tile38 AOF is enabled
-	m["tile38_aof_enabled"] = s.opts.AppendOnly
+	m["meridian_aof_enabled"] = s.opts.AppendOnly
 	// Whether or not an AOF shrink is currently in progress
-	m["tile38_aof_rewrite_in_progress"] = s.shrinking
+	m["meridian_aof_rewrite_in_progress"] = s.shrinking
 	// Length of time the last AOF shrink took
-	m["tile38_aof_last_rewrite_time_sec"] = s.lastShrinkDuration.Load() / int64(time.Second)
+	m["meridian_aof_last_rewrite_time_sec"] = s.lastShrinkDuration.Load() / int64(time.Second)
 	// Duration of the on-going AOF rewrite operation if any
 	var currentShrinkStart time.Time
 	if currentShrinkStart.IsZero() {
-		m["tile38_aof_current_rewrite_time_sec"] = 0
+		m["meridian_aof_current_rewrite_time_sec"] = 0
 	} else {
-		m["tile38_aof_current_rewrite_time_sec"] = time.Since(currentShrinkStart).Seconds()
+		m["meridian_aof_current_rewrite_time_sec"] = time.Since(currentShrinkStart).Seconds()
 	}
 	// Total size of the AOF in bytes
-	m["tile38_aof_size"] = s.aofsz
+	m["meridian_aof_size"] = s.aofsz
 	// Whether or no the HTTP transport is being served
-	m["tile38_http_transport"] = s.http
+	m["meridian_http_transport"] = s.http
 	// Number of connections accepted by the server
-	m["tile38_total_connections_received"] = s.statsTotalConns.Load()
+	m["meridian_total_connections_received"] = s.statsTotalConns.Load()
 	// Number of commands processed by the server
-	m["tile38_total_commands_processed"] = s.statsTotalCommands.Load()
+	m["meridian_total_commands_processed"] = s.statsTotalCommands.Load()
 	// Number of webhook messages sent by server
-	m["tile38_total_messages_sent"] = s.statsTotalMsgsSent.Load()
+	m["meridian_total_messages_sent"] = s.statsTotalMsgsSent.Load()
 	// Number of key expiration events
-	m["tile38_expired_keys"] = s.statsExpired.Load()
+	m["meridian_expired_keys"] = s.statsExpired.Load()
 	// Number of connected slaves
-	m["tile38_connected_slaves"] = len(s.aofconnM)
+	m["meridian_connected_slaves"] = len(s.aofconnM)
 
 	points := 0
 	objects := 0
@@ -355,19 +355,19 @@ func (s *Server) extStats(m map[string]interface{}) {
 	})
 
 	// Number of points in the database
-	m["tile38_num_points"] = points
+	m["meridian_num_points"] = points
 	// Number of objects in the database
-	m["tile38_num_objects"] = objects
+	m["meridian_num_objects"] = objects
 	// Number of string in the database
-	m["tile38_num_strings"] = strings
+	m["meridian_num_strings"] = strings
 	// Number of collections in the database
-	m["tile38_num_collections"] = s.cols.Len()
+	m["meridian_num_collections"] = s.cols.Len()
 	// Number of hooks in the database
-	m["tile38_num_hooks"] = s.hooks.Len()
+	m["meridian_num_hooks"] = s.hooks.Len()
 	// Number of hook groups in the database
-	m["tile38_num_hook_groups"] = s.groupHooks.Len()
+	m["meridian_num_hook_groups"] = s.groupHooks.Len()
 	// Number of object groups in the database
-	m["tile38_num_object_groups"] = s.groupObjects.Len()
+	m["meridian_num_object_groups"] = s.groupObjects.Len()
 
 	avgsz := 0
 	if points != 0 {
@@ -375,7 +375,7 @@ func (s *Server) extStats(m map[string]interface{}) {
 	}
 
 	// Average point size in bytes
-	m["tile38_avg_point_size"] = avgsz
+	m["meridian_avg_point_size"] = avgsz
 
 	sz := 0
 	s.cols.Scan(func(key string, col *collection.Collection) bool {
@@ -384,11 +384,11 @@ func (s *Server) extStats(m map[string]interface{}) {
 	})
 
 	// Total in memory size of all collections
-	m["tile38_in_memory_size"] = sz
+	m["meridian_in_memory_size"] = sz
 }
 
 func (s *Server) writeInfoServer(w *bytes.Buffer) {
-	fmt.Fprintf(w, "tile38_version:%s\r\n", core.Version)
+	fmt.Fprintf(w, "meridian_version:%s\r\n", core.Version)
 	fmt.Fprintf(w, "redis_version:%s\r\n", core.Version)                             // Version of the Redis server
 	fmt.Fprintf(w, "uptime_in_seconds:%d\r\n", int(time.Since(s.started).Seconds())) // Number of seconds since Redis server start
 }

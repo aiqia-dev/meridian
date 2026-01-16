@@ -10,7 +10,7 @@ import (
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/glob"
 )
 
 const (
@@ -40,7 +40,7 @@ const (
 
 var validProperties = []string{RequirePass, LeaderAuth, ProtectedMode, MaxMemory, AutoGC, KeepAlive, LogConfig, ReplicaPriority, AnnouncePort, AnnounceIP}
 
-// Config is a tile38 config
+// Config is a Meridian config
 type Config struct {
 	path string
 

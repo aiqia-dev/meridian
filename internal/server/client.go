@@ -12,7 +12,7 @@ import (
 	"github.com/tidwall/resp"
 )
 
-// Client is an remote connection into to Tile38
+// Client is an remote connection into to Meridian
 type Client struct {
 	id         int            // unique id
 	replPort   int            // the known replication port for follower connections

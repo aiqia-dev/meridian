@@ -11,22 +11,22 @@ VERSION=$(git describe --tags --abbrev=0)
 echo Packaging $PLATFORM Binary
 
 # Remove previous build directory, if needed.
-bdir=tile38-$VERSION-$GOOS-$GOARCH
+bdir=meridian-$VERSION-$GOOS-$GOARCH
 rm -rf packages/$bdir && mkdir -p packages/$bdir
 
 # Make the binaries.
 GOOS=$GOOS GOARCH=$GOARCH make all
-rm -f tile38-luamemtest # not needed
+rm -f meridian-luamemtest # not needed
 
 # Copy the executable binaries.
 if [ "$GOOS" == "windows" ]; then
-	mv tile38-server packages/$bdir/tile38-server.exe
-	mv tile38-cli packages/$bdir/tile38-cli.exe
-	mv tile38-benchmark packages/$bdir/tile38-benchmark.exe
+	mv meridian-server packages/$bdir/meridian-server.exe
+	mv meridian-cli packages/$bdir/meridian-cli.exe
+	mv meridian-benchmark packages/$bdir/meridian-benchmark.exe
 else
-	mv tile38-server packages/$bdir
-	mv tile38-cli packages/$bdir
-	mv tile38-benchmark packages/$bdir
+	mv meridian-server packages/$bdir
+	mv meridian-cli packages/$bdir
+	mv meridian-benchmark packages/$bdir
 fi
 
 # Copy documention and license.
@@ -41,4 +41,3 @@ if [ "$GOOS" == "linux" ]; then
 else
 	zip -r -q $bdir.zip $bdir
 fi
-

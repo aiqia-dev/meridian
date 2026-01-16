@@ -11,10 +11,10 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/collection"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/glob"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/collection"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/glob"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 // BOUNDS key
