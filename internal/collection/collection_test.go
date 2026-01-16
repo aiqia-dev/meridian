@@ -11,8 +11,8 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/tile38/internal/field"
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/field"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 func PO(x, y float64) *geojson.Point {

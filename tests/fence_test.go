@@ -346,7 +346,7 @@ func fence_channel_meta_test(mc *mockServer) error {
 	})
 }
 
-func dialTile38(port int) (redis.Conn, error) {
+func dialMeridian(port int) (redis.Conn, error) {
 	conn, err := redis.Dial("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, err
@@ -358,7 +358,7 @@ func dialTile38(port int) (redis.Conn, error) {
 	return conn, nil
 }
 
-func doTile38(c redis.Conn, cmd string, args ...interface{}) (string, error) {
+func doMeridian(c redis.Conn, cmd string, args ...interface{}) (string, error) {
 	js, err := redis.String(c.Do(cmd, args...))
 	if !gjson.Get(js, "ok").Bool() {
 		return "", errors.New(gjson.Get(js, "err").String())
@@ -377,19 +377,19 @@ func fence_eecio_test(mc *mockServer) error {
 	go func() {
 		defer wg.Done()
 		err1 = func() error {
-			conn, err := dialTile38(mc.port)
+			conn, err := dialMeridian(mc.port)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
-			_, err = doTile38(conn,
+			_, err = doMeridian(conn,
 				"SETCHAN", "test-eec", "NEARBY", "fleet",
 				"FENCE", "DETECT", "enter,exit,cross",
 				"POINT", "10.000", "10.000", "10000")
 			if err != nil {
 				return err
 			}
-			_, err = doTile38(conn, "SUBSCRIBE", "test-eec")
+			_, err = doMeridian(conn, "SUBSCRIBE", "test-eec")
 			if err != nil {
 				return err
 			}
@@ -411,19 +411,19 @@ func fence_eecio_test(mc *mockServer) error {
 	go func() {
 		defer wg.Done()
 		err2 = func() error {
-			conn, err := dialTile38(mc.port)
+			conn, err := dialMeridian(mc.port)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
-			_, err = doTile38(conn,
+			_, err = doMeridian(conn,
 				"SETCHAN", "test-eecio", "NEARBY", "fleet",
 				"FENCE", "DETECT", "enter,exit,cross,inside,outside",
 				"POINT", "10.000", "10.000", "10000")
 			if err != nil {
 				return err
 			}
-			_, err = doTile38(conn, "SUBSCRIBE", "test-eecio")
+			_, err = doMeridian(conn, "SUBSCRIBE", "test-eecio")
 			if err != nil {
 				return err
 			}
@@ -448,31 +448,31 @@ func fence_eecio_test(mc *mockServer) error {
 		err3 = func() error {
 			<-ch // terminal 1
 			<-ch // terminal 2
-			conn, err := dialTile38(mc.port)
+			conn, err := dialMeridian(mc.port)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
-			if _, err = doTile38(conn,
+			if _, err = doMeridian(conn,
 				"SET", "fleet", "vehicle_1",
 				"POINT", "10.0", "10.0"); err != nil {
 				return err
 			}
-			if _, err = doTile38(conn,
+			if _, err = doMeridian(conn,
 				"SET", "fleet", "vehicle_1",
 				"POINT", "0.0", "0.0"); err != nil {
 				return err
 			}
-			if _, err = doTile38(conn,
+			if _, err = doMeridian(conn,
 				"SET", "fleet", "vehicle_1",
 				"POINT", "20.0", "20.0"); err != nil {
 				return err
 			}
-			if _, err = doTile38(conn, "PUBLISH", "test-eecio",
+			if _, err = doMeridian(conn, "PUBLISH", "test-eecio",
 				"DONE"); err != nil {
 				return err
 			}
-			if _, err = doTile38(conn, "PUBLISH", "test-eec",
+			if _, err = doMeridian(conn, "PUBLISH", "test-eec",
 				"DONE"); err != nil {
 				return err
 			}

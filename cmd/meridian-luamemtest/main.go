@@ -102,7 +102,7 @@ func ConvertToLua(L *lua.LState, val resp.Value) lua.LValue {
 	return lua.LString("ERR: unknown RESP type: " + val.Type().String())
 }
 
-func luaTile38Call(evalcmd string, cmd string, args ...string) (resp.Value, error) {
+func luaMeridianCall(evalcmd string, cmd string, args ...string) (resp.Value, error) {
 	var values []resp.Value
 	values = append(values, resp.StringValue("RUNNING:"))
 	values = append(values, resp.StringValue(evalcmd))
@@ -134,7 +134,7 @@ func NewLuaState() *lua.LState {
 	}
 	call := func(ls *lua.LState) int {
 		evalCmd, args := get_args(ls)
-		if res, err := luaTile38Call(evalCmd, args[0], args[1:]...); err != nil {
+		if res, err := luaMeridianCall(evalCmd, args[0], args[1:]...); err != nil {
 			//log.Debugf("RES type: %s value: %s ERR %s\n", res.Type(), res.String(), err);
 			ls.RaiseError("ERR %s", err.Error())
 			return 0
@@ -146,7 +146,7 @@ func NewLuaState() *lua.LState {
 	}
 	pcall := func(ls *lua.LState) int {
 		evalCmd, args := get_args(ls)
-		if res, err := luaTile38Call(evalCmd, args[0], args[1:]...); err != nil {
+		if res, err := luaMeridianCall(evalCmd, args[0], args[1:]...); err != nil {
 			//log.Debugf("RES type: %s value: %s ERR %s\n", res.Type(), res.String(), err);
 			ls.Push(ConvertToLua(ls, resp.ErrorValue(err)))
 			return 1
@@ -180,7 +180,7 @@ func NewLuaState() *lua.LState {
 		"status_reply": status_reply,
 		"sha1hex":      sha1hex,
 	}
-	L.SetGlobal("tile38", L.SetFuncs(L.NewTable(), exports))
+	L.SetGlobal("meridian", L.SetFuncs(L.NewTable(), exports))
 	return L
 }
 
@@ -207,7 +207,7 @@ func runLuaFunc(luaState *lua.LState, script string, name string) resp.Value {
 func runMany(luaState *lua.LState, start int, num int) int {
 	fmt.Printf("\nRunning %d lua calls... ", num)
 	for i := 0; i < num; i++ {
-		script := fmt.Sprintf("return tile38.call('foo', 'bar', %d)", i)
+		script := fmt.Sprintf("return meridian.call('foo', 'bar', %d)", i)
 		name := fmt.Sprintf("f_%020d", i)
 		ret := runLuaFunc(luaState, script, name)
 		if ret.Type() == resp.Error {
@@ -241,7 +241,7 @@ func testLua() {
 	printMemStats()
 
 	fmt.Printf("\nRunning single call as a test\n")
-	ret := runLuaFunc(luaState, "return tile38.call('fake_cmd', 'a', 'b')", "test_call")
+	ret := runLuaFunc(luaState, "return meridian.call('fake_cmd', 'a', 'b')", "test_call")
 	fmt.Printf("Result: %s\n", ret.String())
 
 	printMemStats()

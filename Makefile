@@ -1,20 +1,20 @@
-all: tile38-server tile38-cli tile38-benchmark tile38-luamemtest
+all: meridian-server meridian-cli meridian-benchmark meridian-luamemtest
 
-.PHONY: tile38-server
-tile38-server:
-	@./scripts/build.sh tile38-server
+.PHONY: meridian-server
+meridian-server:
+	@./scripts/build.sh meridian-server
 
-.PHONY: tile38-cli
-tile38-cli:
-	@./scripts/build.sh tile38-cli
+.PHONY: meridian-cli
+meridian-cli:
+	@./scripts/build.sh meridian-cli
 
-.PHONY: tile38-benchmark
-tile38-benchmark:
-	@./scripts/build.sh tile38-benchmark
+.PHONY: meridian-benchmark
+meridian-benchmark:
+	@./scripts/build.sh meridian-benchmark
 
-.PHONY: tile38-luamemtest
-tile38-luamemtest:
-	@./scripts/build.sh tile38-luamemtest
+.PHONY: meridian-luamemtest
+meridian-luamemtest:
+	@./scripts/build.sh meridian-luamemtest
 
 test: all
 	@./scripts/test.sh
@@ -29,17 +29,17 @@ package:
 	@scripts/package.sh ARM64   linux   arm64
 
 clean:
-	rm -rf tile38-server tile38-cli tile38-benchmark tile38-luamemtest 
+	rm -rf meridian-server meridian-cli meridian-benchmark meridian-luamemtest
 
 distclean: clean
 	rm -rf packages/
 
 install: all
-	cp tile38-server /usr/local/bin
-	cp tile38-cli /usr/local/bin
-	cp tile38-benchmark /usr/local/bin
+	cp meridian-server /usr/local/bin
+	cp meridian-cli /usr/local/bin
+	cp meridian-benchmark /usr/local/bin
 
-uninstall: 
-	rm -f /usr/local/bin/tile38-server
-	rm -f /usr/local/bin/tile38-cli
-	rm -f /usr/local/bin/tile38-benchmark
+uninstall:
+	rm -f /usr/local/bin/meridian-server
+	rm -f /usr/local/bin/meridian-cli
+	rm -f /usr/local/bin/meridian-benchmark

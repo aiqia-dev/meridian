@@ -14,8 +14,8 @@ import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
 	"github.com/tidwall/resp"
-	"github.com/tidwall/tile38/internal/bing"
-	"github.com/tidwall/tile38/internal/clip"
+	"github.com/aiqia-dev/meridian/internal/bing"
+	"github.com/aiqia-dev/meridian/internal/clip"
 )
 
 func (s *Server) parseArea(ovs []string, doClip bool) (vs []string, o geojson.Object, err error) {

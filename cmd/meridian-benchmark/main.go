@@ -15,8 +15,8 @@ import (
 
 	"github.com/tidwall/redbench"
 	"github.com/tidwall/redcon"
-	"github.com/tidwall/tile38/cmd/tile38-benchmark/az"
-	"github.com/tidwall/tile38/core"
+	"github.com/aiqia-dev/meridian/cmd/meridian-benchmark/az"
+	"github.com/aiqia-dev/meridian/core"
 )
 
 var (
@@ -43,12 +43,12 @@ func showHelp() bool {
 	} else {
 		gitsha = " (git:" + core.GitSHA + ")"
 	}
-	fmt.Fprintf(os.Stdout, "tile38-benchmark %s%s\n\n", core.Version, gitsha)
-	fmt.Fprintf(os.Stdout, "Usage: tile38-benchmark [-h <host>] [-p <port>] [-c <clients>] [-n <requests>]\n")
+	fmt.Fprintf(os.Stdout, "meridian-benchmark %s%s\n\n", core.Version, gitsha)
+	fmt.Fprintf(os.Stdout, "Usage: meridian-benchmark [-h <host>] [-p <port>] [-c <clients>] [-n <requests>]\n")
 
 	fmt.Fprintf(os.Stdout, " -h <hostname>      Server hostname (default: %s)\n", hostname)
 	fmt.Fprintf(os.Stdout, " -p <port>          Server port (default: %d)\n", port)
-	fmt.Fprintf(os.Stdout, " -a <password>      Password for Tile38 Auth\n")
+	fmt.Fprintf(os.Stdout, " -a <password>      Password for Meridian Auth\n")
 	fmt.Fprintf(os.Stdout, " -c <clients>       Number of parallel connections (default %d)\n", clients)
 	fmt.Fprintf(os.Stdout, " -n <requests>      Total number or requests (default %d)\n", requests)
 	fmt.Fprintf(os.Stdout, " -q                 Quiet. Just show query/sec values\n")
@@ -665,15 +665,15 @@ func main() {
 		case "EVAL":
 			if !redis {
 				var i int64
-				getScript := "return tile38.call('GET', KEYS[1], ARGV[1], 'point')"
+				getScript := "return meridian.call('GET', KEYS[1], ARGV[1], 'point')"
 				get4Script :=
-					"local a = tile38.call('GET', KEYS[1], ARGV[1], 'point');" +
-						"local b = tile38.call('GET', KEYS[1], ARGV[2], 'point');" +
-						"local c = tile38.call('GET', KEYS[1], ARGV[3], 'point');" +
-						"local d = tile38.call('GET', KEYS[1], ARGV[4], 'point');" +
+					"local a = meridian.call('GET', KEYS[1], ARGV[1], 'point');" +
+						"local b = meridian.call('GET', KEYS[1], ARGV[2], 'point');" +
+						"local c = meridian.call('GET', KEYS[1], ARGV[3], 'point');" +
+						"local d = meridian.call('GET', KEYS[1], ARGV[4], 'point');" +
 						"return d"
 
-				setScript := "return tile38.call('SET', KEYS[1], ARGV[1], 'point', ARGV[2], ARGV[3])"
+				setScript := "return meridian.call('SET', KEYS[1], ARGV[1], 'point', ARGV[2], ARGV[3])"
 				if !opts.Quiet {
 					fmt.Println("Scripts to run:")
 					fmt.Println("GET SCRIPT: " + getScript)

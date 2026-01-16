@@ -70,7 +70,7 @@ func Build(c string) error {
 	if c == "" {
 		zcfg = zap.NewProductionConfig()
 
-		// to be able to filter with Tile38 levels
+		// to be able to filter with Meridian levels
 		zcfg.Level.SetLevel(zap.DebugLevel)
 		// disable caller because caller is always log.go
 		zcfg.DisableCaller = true
@@ -80,7 +80,7 @@ func Build(c string) error {
 		if err != nil {
 			return err
 		}
-		// to be able to filter with Tile38 levels
+		// to be able to filter with Meridian levels
 		zcfg.Level.SetLevel(zap.DebugLevel)
 		// disable caller because caller is always log.go
 		zcfg.DisableCaller = true

@@ -5,7 +5,7 @@ package object
 import (
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geometry"
-	"github.com/tidwall/tile38/internal/field"
+	"github.com/aiqia-dev/meridian/internal/field"
 )
 
 type Object struct {

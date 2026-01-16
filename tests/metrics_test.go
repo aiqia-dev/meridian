@@ -52,14 +52,14 @@ func metrics_basic_test(mc *mockServer) error {
 		return fmt.Errorf("Expected status code 200, got: %d", status)
 	}
 	for _, want := range []string{
-		`tile38_connected_clients`,
-		`tile38_cmd_duration_seconds_count{cmd="set"}`,
+		`meridian_connected_clients`,
+		`meridian_cmd_duration_seconds_count{cmd="set"}`,
 		`go_build_info`,
 		`go_threads`,
-		`tile38_collection_objects{col="metrics_test_1"} 1`,
-		`tile38_collection_objects{col="metrics_test_2"} 3`,
-		`tile38_collection_points{col="metrics_test_2"} 2`,
-		`tile38_replication_info`,
+		`meridian_collection_objects{col="metrics_test_1"} 1`,
+		`meridian_collection_objects{col="metrics_test_2"} 3`,
+		`meridian_collection_points{col="metrics_test_2"} 2`,
+		`meridian_replication_info`,
 		`role="leader"`,
 	} {
 		if !strings.Contains(metrics, want) {

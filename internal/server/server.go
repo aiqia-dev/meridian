@@ -32,13 +32,13 @@ import (
 	"github.com/tidwall/redcon"
 	"github.com/tidwall/resp"
 	"github.com/tidwall/rtree"
-	"github.com/tidwall/tile38/core"
-	"github.com/tidwall/tile38/internal/collection"
-	"github.com/tidwall/tile38/internal/deadline"
-	"github.com/tidwall/tile38/internal/endpoint"
-	"github.com/tidwall/tile38/internal/log"
-	"github.com/tidwall/tile38/internal/object"
-	"github.com/tidwall/tile38/internal/viewer"
+	"github.com/aiqia-dev/meridian/core"
+	"github.com/aiqia-dev/meridian/internal/collection"
+	"github.com/aiqia-dev/meridian/internal/deadline"
+	"github.com/aiqia-dev/meridian/internal/endpoint"
+	"github.com/aiqia-dev/meridian/internal/log"
+	"github.com/aiqia-dev/meridian/internal/object"
+	"github.com/aiqia-dev/meridian/internal/viewer"
 )
 
 var errOOM = errors.New("OOM command not allowed when used memory > 'maxmemory'")
@@ -151,7 +151,7 @@ func (l *rwmutex) RUnlock() {
 	l.mu.RUnlock()
 }
 
-// Server is a tile38 controller
+// Server is a Meridian controller
 type Server struct {
 	// user defined options
 	opts Options
@@ -283,7 +283,7 @@ func Serve(opts Options) error {
 		opts.ProtectedMode = "no"
 	}
 
-	log.Infof("Server started, Tile38 version %s, git %s", core.Version, core.GitSHA)
+	log.Infof("Server started, Meridian version %s, git %s", core.Version, core.GitSHA)
 	defer func() {
 		log.Warn("Server has shutdown, bye now")
 		if false {
@@ -1109,7 +1109,7 @@ func (s *Server) handleInputCommand(client *Client, msg *Message) error {
 		switch msg.Command() {
 		case "output", "ping", "echo", "auth":
 		default:
-			return writeErr("LOADING Tile38 is loading the dataset in memory")
+			return writeErr("LOADING Meridian is loading the dataset in memory")
 		}
 	}
 
@@ -1486,14 +1486,14 @@ func (s *Server) command(msg *Message, client *Client) (
 
 // This phrase is copied nearly verbatim from Redis.
 var deniedMessage = []byte(strings.Replace(strings.TrimSpace(`
--DENIED Tile38 is running in protected mode because protected mode is enabled,
+-DENIED Meridian is running in protected mode because protected mode is enabled,
 no bind address was specified, no authentication password is requested to
 clients. In this mode connections are only accepted from the loopback
-interface. If you want to connect from external computers to Tile38 you may
+interface. If you want to connect from external computers to Meridian you may
 adopt one of the following solutions: 1) Just disable protected mode sending
 the command 'CONFIG SET protected-mode no' from the loopback interface by
-connecting to Tile38 from the same host the server is running, however MAKE
-SURE Tile38 is not publicly accessible from internet if you do so. Use CONFIG
+connecting to Meridian from the same host the server is running, however MAKE
+SURE Meridian is not publicly accessible from internet if you do so. Use CONFIG
 REWRITE to make this change permanent. 2) Alternatively you can just disable
 the protected mode by editing the Tile38 configuration file, and setting the
 protected mode option to 'no', and then restarting the server. 3) If you

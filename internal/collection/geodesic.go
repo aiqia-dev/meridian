@@ -3,7 +3,7 @@ package collection
 import (
 	"math"
 
-	"github.com/tidwall/tile38/internal/object"
+	"github.com/aiqia-dev/meridian/internal/object"
 )
 
 func geodeticDistAlgo(center [2]float64) (
