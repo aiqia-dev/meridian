@@ -11,11 +11,12 @@
 7. [Webhooks](#webhooks)
 8. [Pub/Sub](#pubsub)
 9. [Integracao com NestJS](#integracao-com-nestjs)
-10. [Lua Scripting](#lua-scripting)
-11. [Replicacao](#replicacao)
-12. [Metricas e Monitoramento](#metricas-e-monitoramento)
-13. [Exemplos Praticos](#exemplos-praticos)
-14. [Referencia de API](#referencia-de-api)
+10. [Swagger/OpenAPI](#swaggeropenapi)
+11. [Lua Scripting](#lua-scripting)
+12. [Replicacao](#replicacao)
+13. [Metricas e Monitoramento](#metricas-e-monitoramento)
+14. [Exemplos Praticos](#exemplos-praticos)
+15. [Referencia de API](#referencia-de-api)
 
 ---
 
@@ -2480,6 +2481,1276 @@ function FleetMap() {
   );
 }
 ```
+
+---
+
+## Swagger/OpenAPI
+
+Esta secao demonstra como configurar Swagger/OpenAPI para documentar a API REST da integracao NestJS com Meridian.
+
+### Instalacao
+
+```bash
+npm install @nestjs/swagger swagger-ui-express
+npm install -D @types/swagger-ui-express
+```
+
+### Configuracao do Swagger
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Configurar validacao global
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    forbidNonWhitelisted: true,
+  }));
+
+  // Configurar Swagger
+  const config = new DocumentBuilder()
+    .setTitle('Fleet Management API')
+    .setDescription(`
+      API para gerenciamento de frota integrada com AIQIA Meridian.
+
+      ## Recursos
+
+      - **Veiculos**: CRUD e rastreamento em tempo real
+      - **Zonas**: Criacao e monitoramento de geofences
+      - **Webhooks**: Recebimento de eventos de geofence
+      - **WebSocket**: Atualizacoes em tempo real
+
+      ## Integracao com Meridian
+
+      Esta API utiliza o AIQIA Meridian como backend para:
+      - Armazenamento de dados geoespaciais
+      - Buscas por proximidade (NEARBY)
+      - Geofencing em tempo real
+      - Pub/Sub para notificacoes
+    `)
+    .setVersion('1.0')
+    .addTag('vehicles', 'Operacoes de veiculos')
+    .addTag('zones', 'Operacoes de zonas/geofences')
+    .addTag('webhooks', 'Endpoints de webhook')
+    .addBearerAuth()
+    .addServer('http://localhost:3000', 'Desenvolvimento')
+    .addServer('https://api.example.com', 'Producao')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha',
+    },
+    customSiteTitle: 'Fleet API - Swagger',
+  });
+
+  await app.listen(3000);
+  console.log('Application running on http://localhost:3000');
+  console.log('Swagger docs available at http://localhost:3000/api/docs');
+}
+bootstrap();
+```
+
+### DTOs com Decorators Swagger
+
+```typescript
+// src/fleet/dto/point.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsOptional, Min, Max } from 'class-validator';
+
+export class PointDto {
+  @ApiProperty({
+    description: 'Latitude em graus decimais',
+    example: -23.5505,
+    minimum: -90,
+    maximum: 90,
+  })
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat: number;
+
+  @ApiProperty({
+    description: 'Longitude em graus decimais',
+    example: -46.6333,
+    minimum: -180,
+    maximum: 180,
+  })
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lon: number;
+
+  @ApiPropertyOptional({
+    description: 'Altitude em metros (opcional)',
+    example: 760,
+  })
+  @IsOptional()
+  @IsNumber()
+  z?: number;
+}
+```
+
+```typescript
+// src/fleet/dto/vehicle.dto.ts
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional, ValidateNested, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PointDto } from './point.dto';
+
+export enum VehicleStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  MAINTENANCE = 'maintenance',
+}
+
+export class CreateVehicleDto {
+  @ApiProperty({
+    description: 'Identificador unico do veiculo',
+    example: 'truck_001',
+  })
+  @IsString()
+  id: string;
+
+  @ApiProperty({
+    description: 'Localizacao atual do veiculo',
+    type: PointDto,
+  })
+  @ValidateNested()
+  @Type(() => PointDto)
+  location: PointDto;
+
+  @ApiPropertyOptional({
+    description: 'Velocidade atual em km/h',
+    example: 65,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  speed?: number;
+
+  @ApiPropertyOptional({
+    description: 'Direcao em graus (0-360)',
+    example: 180,
+    minimum: 0,
+    maximum: 360,
+  })
+  @IsOptional()
+  @IsNumber()
+  heading?: number;
+
+  @ApiPropertyOptional({
+    description: 'Nivel de combustivel em porcentagem',
+    example: 75.5,
+    minimum: 0,
+    maximum: 100,
+  })
+  @IsOptional()
+  @IsNumber()
+  fuel?: number;
+
+  @ApiPropertyOptional({
+    description: 'Nome do motorista',
+    example: 'Joao Silva',
+  })
+  @IsOptional()
+  @IsString()
+  driver?: string;
+
+  @ApiPropertyOptional({
+    description: 'Status do veiculo',
+    enum: VehicleStatus,
+    example: VehicleStatus.ACTIVE,
+  })
+  @IsOptional()
+  @IsEnum(VehicleStatus)
+  status?: VehicleStatus;
+}
+
+export class UpdateVehicleDto extends PartialType(CreateVehicleDto) {}
+
+export class UpdateLocationDto {
+  @ApiProperty({
+    description: 'Identificador do veiculo',
+    example: 'truck_001',
+  })
+  @IsString()
+  id: string;
+
+  @ApiProperty({
+    description: 'Nova localizacao do veiculo',
+    type: PointDto,
+  })
+  @ValidateNested()
+  @Type(() => PointDto)
+  location: PointDto;
+
+  @ApiPropertyOptional({
+    description: 'Velocidade atual em km/h',
+    example: 72,
+  })
+  @IsOptional()
+  @IsNumber()
+  speed?: number;
+
+  @ApiPropertyOptional({
+    description: 'Direcao em graus',
+    example: 45,
+  })
+  @IsOptional()
+  @IsNumber()
+  heading?: number;
+}
+```
+
+```typescript
+// src/fleet/dto/zone.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNumber, IsEnum, IsOptional, ValidateNested, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PointDto } from './point.dto';
+
+export enum ZoneType {
+  PICKUP = 'pickup',
+  DROPOFF = 'dropoff',
+  RESTRICTED = 'restricted',
+  WAREHOUSE = 'warehouse',
+  PARKING = 'parking',
+}
+
+export class CreateCircleZoneDto {
+  @ApiProperty({
+    description: 'Identificador unico da zona',
+    example: 'zone_downtown_01',
+  })
+  @IsString()
+  id: string;
+
+  @ApiProperty({
+    description: 'Nome descritivo da zona',
+    example: 'Centro de Distribuicao Norte',
+  })
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'Tipo da zona',
+    enum: ZoneType,
+    example: ZoneType.WAREHOUSE,
+  })
+  @IsEnum(ZoneType)
+  type: ZoneType;
+
+  @ApiProperty({
+    description: 'Centro da zona circular',
+    type: PointDto,
+  })
+  @ValidateNested()
+  @Type(() => PointDto)
+  center: PointDto;
+
+  @ApiProperty({
+    description: 'Raio da zona em metros',
+    example: 500,
+    minimum: 1,
+  })
+  @IsNumber()
+  radius: number;
+
+  @ApiPropertyOptional({
+    description: 'Metadados adicionais da zona',
+    example: { manager: 'Carlos', capacity: 50 },
+  })
+  @IsOptional()
+  metadata?: Record<string, any>;
+}
+
+export class CreatePolygonZoneDto {
+  @ApiProperty({
+    description: 'Identificador unico da zona',
+    example: 'zone_polygon_01',
+  })
+  @IsString()
+  id: string;
+
+  @ApiProperty({
+    description: 'Nome descritivo da zona',
+    example: 'Area Industrial',
+  })
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'Tipo da zona',
+    enum: ZoneType,
+    example: ZoneType.RESTRICTED,
+  })
+  @IsEnum(ZoneType)
+  type: ZoneType;
+
+  @ApiProperty({
+    description: 'Vertices do poligono (primeiro e ultimo ponto devem ser iguais)',
+    type: [PointDto],
+    example: [
+      { lat: -23.55, lon: -46.64 },
+      { lat: -23.55, lon: -46.63 },
+      { lat: -23.54, lon: -46.63 },
+      { lat: -23.54, lon: -46.64 },
+      { lat: -23.55, lon: -46.64 },
+    ],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PointDto)
+  vertices: PointDto[];
+}
+```
+
+```typescript
+// src/fleet/dto/search.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class NearbySearchDto {
+  @ApiProperty({
+    description: 'Latitude do ponto central',
+    example: -23.5505,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  lat: number;
+
+  @ApiProperty({
+    description: 'Longitude do ponto central',
+    example: -46.6333,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  lon: number;
+
+  @ApiProperty({
+    description: 'Raio de busca em metros',
+    example: 5000,
+    minimum: 1,
+  })
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  radius: number;
+
+  @ApiPropertyOptional({
+    description: 'Limite de resultados',
+    example: 100,
+    default: 100,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  @Type(() => Number)
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filtro por padrao de ID (glob)',
+    example: 'truck_*',
+  })
+  @IsOptional()
+  @IsString()
+  match?: string;
+}
+
+export class WithinBoundsDto {
+  @ApiProperty({ description: 'Latitude minima (sul)', example: -23.56 })
+  @IsNumber()
+  @Type(() => Number)
+  minLat: number;
+
+  @ApiProperty({ description: 'Longitude minima (oeste)', example: -46.65 })
+  @IsNumber()
+  @Type(() => Number)
+  minLon: number;
+
+  @ApiProperty({ description: 'Latitude maxima (norte)', example: -23.54 })
+  @IsNumber()
+  @Type(() => Number)
+  maxLat: number;
+
+  @ApiProperty({ description: 'Longitude maxima (leste)', example: -46.62 })
+  @IsNumber()
+  @Type(() => Number)
+  maxLon: number;
+
+  @ApiPropertyOptional({ description: 'Limite de resultados', example: 100 })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  limit?: number;
+}
+```
+
+```typescript
+// src/fleet/dto/webhook.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class GeofenceEventDto {
+  @ApiProperty({
+    description: 'Comando que disparou o evento',
+    enum: ['set', 'del', 'drop'],
+    example: 'set',
+  })
+  command: 'set' | 'del' | 'drop';
+
+  @ApiProperty({
+    description: 'Tipo de deteccao',
+    enum: ['enter', 'exit', 'inside', 'outside', 'cross'],
+    example: 'enter',
+  })
+  detect: 'enter' | 'exit' | 'inside' | 'outside' | 'cross';
+
+  @ApiProperty({
+    description: 'Nome do webhook',
+    example: 'zone_warehouse_webhook',
+  })
+  hook: string;
+
+  @ApiProperty({
+    description: 'Colecao do objeto',
+    example: 'fleet',
+  })
+  key: string;
+
+  @ApiProperty({
+    description: 'ID do objeto',
+    example: 'truck_001',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Timestamp do evento (ISO 8601)',
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  time: string;
+
+  @ApiProperty({
+    description: 'Geometria do objeto',
+    example: { type: 'Point', coordinates: [-46.6333, -23.5505] },
+  })
+  object: {
+    type: string;
+    coordinates: number[];
+  };
+
+  @ApiPropertyOptional({
+    description: 'Campos do objeto',
+    example: { speed: 65, fuel: 80 },
+  })
+  fields?: Record<string, number>;
+
+  @ApiPropertyOptional({
+    description: 'Metadados do webhook',
+    example: { zoneId: 'zone_01', zoneName: 'Warehouse' },
+  })
+  meta?: Record<string, any>;
+}
+
+export class WebhookResponseDto {
+  @ApiProperty({
+    description: 'Indica se o webhook foi recebido com sucesso',
+    example: true,
+  })
+  received: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Mensagem adicional',
+    example: 'Event processed successfully',
+  })
+  message?: string;
+}
+```
+
+```typescript
+// src/fleet/dto/response.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class VehicleResponseDto {
+  @ApiProperty({ example: 'truck_001' })
+  id: string;
+
+  @ApiProperty({
+    example: { type: 'Point', coordinates: [-46.6333, -23.5505] },
+  })
+  object: {
+    type: string;
+    coordinates: number[];
+  };
+
+  @ApiPropertyOptional({
+    example: { speed: 65, fuel: 80, heading: 180 },
+  })
+  fields?: Record<string, number>;
+}
+
+export class SearchResultDto {
+  @ApiProperty({
+    description: 'Cursor para paginacao',
+    example: 0,
+  })
+  cursor: number;
+
+  @ApiProperty({
+    description: 'Total de resultados',
+    example: 25,
+  })
+  count: number;
+
+  @ApiProperty({
+    description: 'Lista de objetos encontrados',
+    type: [VehicleResponseDto],
+  })
+  objects: VehicleResponseDto[];
+}
+
+export class SuccessResponseDto {
+  @ApiProperty({
+    description: 'Indica sucesso da operacao',
+    example: true,
+  })
+  success: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Mensagem adicional',
+    example: 'Operation completed successfully',
+  })
+  message?: string;
+}
+
+export class ErrorResponseDto {
+  @ApiProperty({
+    description: 'Codigo de status HTTP',
+    example: 400,
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    description: 'Mensagem de erro',
+    example: 'Validation failed',
+  })
+  message: string;
+
+  @ApiPropertyOptional({
+    description: 'Detalhes do erro',
+    example: ['lat must be between -90 and 90'],
+  })
+  error?: string | string[];
+}
+```
+
+### Controller com Decorators Swagger
+
+```typescript
+// src/fleet/fleet.controller.ts
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FleetService } from './fleet.service';
+import {
+  CreateVehicleDto,
+  UpdateVehicleDto,
+  UpdateLocationDto,
+} from './dto/vehicle.dto';
+import { CreateCircleZoneDto, CreatePolygonZoneDto } from './dto/zone.dto';
+import { NearbySearchDto, WithinBoundsDto } from './dto/search.dto';
+import { GeofenceEventDto, WebhookResponseDto } from './dto/webhook.dto';
+import {
+  VehicleResponseDto,
+  SearchResultDto,
+  SuccessResponseDto,
+  ErrorResponseDto,
+} from './dto/response.dto';
+
+@ApiTags('vehicles')
+@Controller('api/fleet')
+export class FleetController {
+  constructor(private readonly fleetService: FleetService) {}
+
+  // ==================== Veiculos ====================
+
+  @Get('vehicles')
+  @ApiOperation({
+    summary: 'Listar todos os veiculos',
+    description: 'Retorna lista paginada de todos os veiculos cadastrados na frota.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limite de resultados (default: 100)',
+    example: 100,
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    type: Number,
+    description: 'Cursor para paginacao',
+    example: 0,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de veiculos retornada com sucesso',
+    type: SearchResultDto,
+  })
+  async getAllVehicles(
+    @Query('limit') limit?: number,
+    @Query('cursor') cursor?: number,
+  ): Promise<SearchResultDto> {
+    return this.fleetService.getAllVehicles({ limit, cursor });
+  }
+
+  @Get('vehicles/nearby')
+  @ApiOperation({
+    summary: 'Buscar veiculos proximos',
+    description: 'Busca veiculos dentro de um raio especificado a partir de um ponto.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Veiculos proximos encontrados',
+    type: SearchResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parametros invalidos',
+    type: ErrorResponseDto,
+  })
+  async getNearbyVehicles(@Query() query: NearbySearchDto): Promise<SearchResultDto> {
+    return this.fleetService.getVehiclesNearby(
+      query.lat,
+      query.lon,
+      query.radius,
+      { limit: query.limit, match: query.match },
+    );
+  }
+
+  @Get('vehicles/within')
+  @ApiOperation({
+    summary: 'Buscar veiculos dentro de area',
+    description: 'Busca veiculos dentro de um retangulo definido por coordenadas.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Veiculos dentro da area encontrados',
+    type: SearchResultDto,
+  })
+  async getVehiclesWithinBounds(@Query() query: WithinBoundsDto): Promise<SearchResultDto> {
+    return this.fleetService.getVehiclesInBounds(
+      { minLat: query.minLat, minLon: query.minLon, maxLat: query.maxLat, maxLon: query.maxLon },
+      { limit: query.limit },
+    );
+  }
+
+  @Get('vehicles/moving')
+  @ApiOperation({
+    summary: 'Listar veiculos em movimento',
+    description: 'Retorna veiculos com velocidade acima do minimo especificado.',
+  })
+  @ApiQuery({
+    name: 'minSpeed',
+    required: false,
+    type: Number,
+    description: 'Velocidade minima em km/h (default: 5)',
+    example: 5,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Veiculos em movimento',
+    type: SearchResultDto,
+  })
+  async getMovingVehicles(@Query('minSpeed') minSpeed?: number): Promise<SearchResultDto> {
+    return this.fleetService.getMovingVehicles(minSpeed || 5);
+  }
+
+  @Get('vehicles/:id')
+  @ApiOperation({
+    summary: 'Obter veiculo por ID',
+    description: 'Retorna dados completos de um veiculo especifico.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador unico do veiculo',
+    example: 'truck_001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Veiculo encontrado',
+    type: VehicleResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Veiculo nao encontrado',
+    type: ErrorResponseDto,
+  })
+  async getVehicle(@Param('id') id: string): Promise<VehicleResponseDto> {
+    const vehicle = await this.fleetService.getVehicle(id);
+    if (!vehicle) {
+      throw new NotFoundException(`Vehicle ${id} not found`);
+    }
+    return vehicle;
+  }
+
+  @Post('vehicles')
+  @ApiOperation({
+    summary: 'Criar novo veiculo',
+    description: 'Cadastra um novo veiculo na frota com localizacao inicial.',
+  })
+  @ApiBody({ type: CreateVehicleDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Veiculo criado com sucesso',
+    type: SuccessResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados invalidos',
+    type: ErrorResponseDto,
+  })
+  async createVehicle(@Body() dto: CreateVehicleDto): Promise<SuccessResponseDto> {
+    const success = await this.fleetService.createVehicle(dto);
+    return { success, message: `Vehicle ${dto.id} created successfully` };
+  }
+
+  @Put('vehicles/:id/location')
+  @ApiOperation({
+    summary: 'Atualizar localizacao do veiculo',
+    description: 'Atualiza a posicao geografica e dados de telemetria do veiculo.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador do veiculo',
+    example: 'truck_001',
+  })
+  @ApiBody({ type: UpdateLocationDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Localizacao atualizada com sucesso',
+    type: SuccessResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Veiculo nao encontrado',
+    type: ErrorResponseDto,
+  })
+  async updateLocation(
+    @Param('id') id: string,
+    @Body() dto: UpdateLocationDto,
+  ): Promise<SuccessResponseDto> {
+    const success = await this.fleetService.updateVehicleLocation({
+      id,
+      lat: dto.location.lat,
+      lon: dto.location.lon,
+      speed: dto.speed,
+      heading: dto.heading,
+    });
+    return { success };
+  }
+
+  @Delete('vehicles/:id')
+  @ApiOperation({
+    summary: 'Remover veiculo',
+    description: 'Remove um veiculo da frota.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador do veiculo',
+    example: 'truck_001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Veiculo removido com sucesso',
+    type: SuccessResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Veiculo nao encontrado',
+    type: ErrorResponseDto,
+  })
+  async removeVehicle(@Param('id') id: string): Promise<SuccessResponseDto> {
+    const success = await this.fleetService.removeVehicle(id);
+    if (!success) {
+      throw new NotFoundException(`Vehicle ${id} not found`);
+    }
+    return { success, message: `Vehicle ${id} removed successfully` };
+  }
+
+  // ==================== Zonas ====================
+
+  @ApiTags('zones')
+  @Post('zones/circle')
+  @ApiOperation({
+    summary: 'Criar zona circular',
+    description: 'Cria uma nova zona de geofence circular e inicia monitoramento.',
+  })
+  @ApiBody({ type: CreateCircleZoneDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Zona criada e monitoramento iniciado',
+    type: SuccessResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados invalidos',
+    type: ErrorResponseDto,
+  })
+  async createCircleZone(@Body() dto: CreateCircleZoneDto): Promise<SuccessResponseDto> {
+    await this.fleetService.createZone({
+      id: dto.id,
+      name: dto.name,
+      type: dto.type,
+      lat: dto.center.lat,
+      lon: dto.center.lon,
+      radius: dto.radius,
+    });
+    await this.fleetService.setupZoneMonitoring({
+      id: dto.id,
+      name: dto.name,
+      type: dto.type,
+      lat: dto.center.lat,
+      lon: dto.center.lon,
+      radius: dto.radius,
+    });
+    return {
+      success: true,
+      message: `Zone ${dto.name} created and monitoring started`,
+    };
+  }
+
+  @ApiTags('zones')
+  @Post('zones/polygon')
+  @ApiOperation({
+    summary: 'Criar zona poligonal',
+    description: 'Cria uma nova zona de geofence com formato poligonal.',
+  })
+  @ApiBody({ type: CreatePolygonZoneDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Zona poligonal criada',
+    type: SuccessResponseDto,
+  })
+  async createPolygonZone(@Body() dto: CreatePolygonZoneDto): Promise<SuccessResponseDto> {
+    const geoJSON = {
+      type: 'Polygon',
+      coordinates: [dto.vertices.map(v => [v.lon, v.lat])],
+    };
+    await this.fleetService.createPolygonZone(dto.id, dto.name, dto.type, geoJSON);
+    return {
+      success: true,
+      message: `Polygon zone ${dto.name} created`,
+    };
+  }
+
+  @ApiTags('zones')
+  @Get('zones')
+  @ApiOperation({
+    summary: 'Listar todas as zonas',
+    description: 'Retorna lista de todas as zonas de geofence cadastradas.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de zonas',
+    type: SearchResultDto,
+  })
+  async getAllZones(): Promise<SearchResultDto> {
+    return this.fleetService.getAllZones();
+  }
+
+  @ApiTags('zones')
+  @Delete('zones/:id')
+  @ApiOperation({
+    summary: 'Remover zona',
+    description: 'Remove uma zona de geofence e para o monitoramento.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador da zona',
+    example: 'zone_downtown_01',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Zona removida com sucesso',
+    type: SuccessResponseDto,
+  })
+  async removeZone(@Param('id') id: string): Promise<SuccessResponseDto> {
+    await this.fleetService.removeZone(id);
+    return { success: true, message: `Zone ${id} removed` };
+  }
+
+  // ==================== Webhooks ====================
+
+  @ApiTags('webhooks')
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Receber evento de geofence',
+    description: `
+      Endpoint para receber notificacoes de eventos de geofence do Meridian.
+
+      ## Tipos de Eventos
+
+      - **enter**: Veiculo entrou na zona
+      - **exit**: Veiculo saiu da zona
+      - **inside**: Veiculo esta dentro da zona
+      - **outside**: Veiculo esta fora da zona
+      - **cross**: Veiculo cruzou a borda da zona
+
+      ## Configuracao no Meridian
+
+      \`\`\`bash
+      SETHOOK zone_webhook http://localhost:3000/api/fleet/webhook \\
+        META {"zoneId":"zone_01","zoneName":"Warehouse"} \\
+        NEARBY fleet FENCE DETECT enter,exit \\
+        POINT -23.5505 -46.6333 500
+      \`\`\`
+    `,
+  })
+  @ApiBody({ type: GeofenceEventDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Evento recebido e processado',
+    type: WebhookResponseDto,
+  })
+  async handleWebhook(@Body() payload: GeofenceEventDto): Promise<WebhookResponseDto> {
+    console.log('Webhook received:', JSON.stringify(payload, null, 2));
+
+    // Processar evento
+    const { detect, id, meta } = payload;
+
+    if (meta?.zoneType === 'restricted' && detect === 'enter') {
+      console.warn(`SECURITY ALERT: Vehicle ${id} entered restricted zone ${meta.zoneName}`);
+      // Implementar logica de alerta
+    }
+
+    return { received: true, message: 'Event processed successfully' };
+  }
+
+  // ==================== Estatisticas ====================
+
+  @Get('stats')
+  @ApiOperation({
+    summary: 'Obter estatisticas da frota',
+    description: 'Retorna estatisticas agregadas da frota.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estatisticas da frota',
+    schema: {
+      type: 'object',
+      properties: {
+        totalVehicles: { type: 'number', example: 150 },
+        activeVehicles: { type: 'number', example: 120 },
+        movingVehicles: { type: 'number', example: 85 },
+        totalZones: { type: 'number', example: 25 },
+        averageSpeed: { type: 'number', example: 45.5 },
+        averageFuel: { type: 'number', example: 68.2 },
+      },
+    },
+  })
+  async getStats() {
+    return this.fleetService.getFleetStats();
+  }
+}
+```
+
+### Schemas Customizados para Respostas Complexas
+
+```typescript
+// src/fleet/schemas/geojson.schema.ts
+import { ApiProperty } from '@nestjs/swagger';
+
+export class GeoJSONPointSchema {
+  @ApiProperty({ example: 'Point' })
+  type: string;
+
+  @ApiProperty({
+    description: 'Coordenadas [longitude, latitude]',
+    example: [-46.6333, -23.5505],
+    type: [Number],
+  })
+  coordinates: number[];
+}
+
+export class GeoJSONPolygonSchema {
+  @ApiProperty({ example: 'Polygon' })
+  type: string;
+
+  @ApiProperty({
+    description: 'Array de aneis de coordenadas',
+    example: [[[-46.65, -23.55], [-46.65, -23.54], [-46.64, -23.54], [-46.64, -23.55], [-46.65, -23.55]]],
+  })
+  coordinates: number[][][];
+}
+```
+
+### Documentacao de WebSocket no Swagger
+
+```typescript
+// src/fleet/dto/websocket.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/**
+ * Documentacao dos eventos WebSocket
+ *
+ * Conexao: ws://localhost:3000/fleet
+ *
+ * Eventos Cliente -> Servidor:
+ * - subscribe:vehicles - Inscrever para atualizacoes de veiculos
+ * - subscribe:zone - Inscrever para eventos de zona especifica
+ * - update:location - Enviar atualizacao de localizacao
+ * - query:nearby - Consultar veiculos proximos
+ *
+ * Eventos Servidor -> Cliente:
+ * - vehicle:updated - Veiculo teve posicao atualizada
+ * - geofence:event - Evento de geofence ocorreu
+ * - zone:event - Evento especifico de zona
+ */
+
+export class WsSubscribeVehiclesDto {
+  @ApiProperty({
+    description: 'Nome do evento',
+    example: 'subscribe:vehicles',
+  })
+  event: string;
+
+  @ApiProperty({
+    description: 'Colecao para monitorar',
+    example: { collection: 'fleet' },
+  })
+  data: {
+    collection?: string;
+  };
+}
+
+export class WsSubscribeZoneDto {
+  @ApiProperty({
+    description: 'Nome do evento',
+    example: 'subscribe:zone',
+  })
+  event: string;
+
+  @ApiProperty({
+    description: 'ID da zona',
+    example: { zoneId: 'zone_01' },
+  })
+  data: {
+    zoneId: string;
+  };
+}
+
+export class WsUpdateLocationDto {
+  @ApiProperty({
+    description: 'Nome do evento',
+    example: 'update:location',
+  })
+  event: string;
+
+  @ApiProperty({
+    example: {
+      id: 'truck_001',
+      lat: -23.5505,
+      lon: -46.6333,
+      speed: 65,
+      heading: 180,
+    },
+  })
+  data: {
+    id: string;
+    lat: number;
+    lon: number;
+    speed?: number;
+    heading?: number;
+  };
+}
+
+export class WsVehicleUpdatedDto {
+  @ApiProperty({
+    description: 'Nome do evento',
+    example: 'vehicle:updated',
+  })
+  event: string;
+
+  @ApiProperty({
+    example: {
+      id: 'truck_001',
+      lat: -23.5505,
+      lon: -46.6333,
+      speed: 65,
+      heading: 180,
+      timestamp: '2024-01-15T10:30:00.000Z',
+    },
+  })
+  data: {
+    id: string;
+    lat: number;
+    lon: number;
+    speed?: number;
+    heading?: number;
+    timestamp: string;
+  };
+}
+```
+
+### Adicionar Pagina de WebSocket no Swagger
+
+```typescript
+// src/main.ts (adicionar ao SwaggerModule.setup)
+const document = SwaggerModule.createDocument(app, config);
+
+// Adicionar documentacao customizada para WebSocket
+document.paths['/ws/fleet'] = {
+  get: {
+    tags: ['websocket'],
+    summary: 'WebSocket Connection',
+    description: `
+## Conexao WebSocket
+
+**URL**: \`ws://localhost:3000/fleet\`
+
+### Eventos Cliente -> Servidor
+
+| Evento | Descricao | Payload |
+|--------|-----------|---------|
+| \`subscribe:vehicles\` | Inscrever para atualizacoes | \`{ collection: "fleet" }\` |
+| \`subscribe:zone\` | Inscrever em zona especifica | \`{ zoneId: "zone_01" }\` |
+| \`update:location\` | Enviar nova localizacao | \`{ id, lat, lon, speed?, heading? }\` |
+| \`query:nearby\` | Consultar veiculos proximos | \`{ lat, lon, radius }\` |
+
+### Eventos Servidor -> Cliente
+
+| Evento | Descricao | Payload |
+|--------|-----------|---------|
+| \`vehicle:updated\` | Veiculo atualizado | \`{ id, lat, lon, speed, heading, timestamp }\` |
+| \`geofence:event\` | Evento de geofence | \`{ detect, id, object, fields, meta }\` |
+| \`zone:event\` | Evento de zona especifica | \`{ detect, id, object, meta }\` |
+
+### Exemplo JavaScript
+
+\`\`\`javascript
+const socket = io('http://localhost:3000/fleet');
+
+// Inscrever para atualizacoes
+socket.emit('subscribe:vehicles', { collection: 'fleet' });
+
+// Receber atualizacoes
+socket.on('vehicle:updated', (data) => {
+  console.log('Vehicle updated:', data);
+});
+
+// Receber eventos de geofence
+socket.on('geofence:event', (event) => {
+  console.log('Geofence event:', event);
+});
+\`\`\`
+    `,
+    responses: {
+      '101': {
+        description: 'Switching Protocols - WebSocket connection established',
+      },
+    },
+  },
+};
+
+SwaggerModule.setup('api/docs', app, document);
+```
+
+### Exportar Especificacao OpenAPI
+
+```typescript
+// scripts/generate-openapi.ts
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from '../src/app.module';
+import * as fs from 'fs';
+
+async function generateOpenApiSpec() {
+  const app = await NestFactory.create(AppModule, { logger: false });
+
+  const config = new DocumentBuilder()
+    .setTitle('Fleet Management API')
+    .setDescription('API para gerenciamento de frota integrada com AIQIA Meridian')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+
+  // Salvar como JSON
+  fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
+
+  // Salvar como YAML
+  const yaml = require('yaml');
+  fs.writeFileSync('./openapi.yaml', yaml.stringify(document));
+
+  console.log('OpenAPI specification generated: openapi.json, openapi.yaml');
+
+  await app.close();
+}
+
+generateOpenApiSpec();
+```
+
+### Executar Geracao
+
+```bash
+# Adicionar ao package.json
+{
+  "scripts": {
+    "generate:openapi": "ts-node scripts/generate-openapi.ts"
+  }
+}
+
+# Executar
+npm run generate:openapi
+```
+
+### Resultado
+
+Apos configurar, acesse:
+- **Swagger UI**: http://localhost:3000/api/docs
+- **OpenAPI JSON**: http://localhost:3000/api/docs-json
+- **OpenAPI YAML**: http://localhost:3000/api/docs-yaml
+
+A interface Swagger permitira:
+- Visualizar todos os endpoints documentados
+- Testar requisicoes diretamente no navegador
+- Ver schemas de request/response
+- Exportar especificacao para geracao de clientes
 
 ---
 
