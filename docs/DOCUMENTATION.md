@@ -15,8 +15,9 @@
 11. [Lua Scripting](#lua-scripting)
 12. [Replicacao](#replicacao)
 13. [Metricas e Monitoramento](#metricas-e-monitoramento)
-14. [Exemplos Praticos](#exemplos-praticos)
-15. [Referencia de API](#referencia-de-api)
+14. [Admin Panel](#admin-panel)
+15. [Exemplos Praticos](#exemplos-praticos)
+16. [Referencia de API](#referencia-de-api)
 
 ---
 
@@ -138,6 +139,9 @@ make test
 | `--metrics-addr` | Endereco para metricas Prometheus | - |
 | `--pidfile` | Arquivo de PID | - |
 | `--spinlock` | Usar spinlock (workloads pesados) | `false` |
+| `--admin-user` | Usuario do admin panel | - |
+| `--admin-password` | Senha do admin panel | - |
+| `--admin-jwt-secret` | Secret JWT (auto-gerado se vazio) | - |
 
 ### Configuracao em Runtime
 
@@ -160,7 +164,28 @@ CONFIG REWRITE
 
 ### Variaveis de Ambiente
 
+O Meridian suporta configuracao via arquivo `.env` ou variaveis de ambiente:
+
 ```bash
+# Configuracao do servidor
+MERIDIAN_HOST=                      # Host (vazio = todas interfaces)
+MERIDIAN_PORT=9851                  # Porta
+MERIDIAN_DIR=data                   # Diretorio de dados
+MERIDIAN_PROTECTED_MODE=no          # Modo protegido
+MERIDIAN_APPENDONLY=yes             # Persistencia AOF
+MERIDIAN_MAXMEMORY=                 # Limite de memoria (ex: 1gb, 512mb)
+MERIDIAN_REQUIREPASS=               # Senha de autenticacao
+MERIDIAN_METRICS_ADDR=              # Endereco Prometheus (ex: :9090)
+
+# Logging
+MERIDIAN_LOG_ENCODING=text          # text ou json
+MERIDIAN_VERBOSE=false              # Log verboso
+
+# Admin Panel
+MERIDIAN_ADMIN_USER=admin           # Usuario do admin
+MERIDIAN_ADMIN_PASSWORD=            # Senha do admin
+MERIDIAN_ADMIN_JWT_SECRET=          # Secret JWT (auto-gerado se vazio)
+
 # Para o CLI
 export MERIDIAN_HOSTNAME=127.0.0.1
 export MERIDIAN_PORT=9851
@@ -3923,6 +3948,122 @@ scrape_configs:
       - targets: ['localhost:4321']
     scrape_interval: 15s
 ```
+
+---
+
+## Admin Panel
+
+O Meridian inclui um painel administrativo web integrado para gerenciamento visual do banco de dados geoespacial. O admin panel e servido diretamente pelo servidor Meridian em `/admin/`.
+
+### Configuracao
+
+Configure o admin panel usando variaveis de ambiente ou flags de linha de comando:
+
+```bash
+# Variaveis de ambiente (.env)
+MERIDIAN_ADMIN_USER=admin
+MERIDIAN_ADMIN_PASSWORD=sua_senha_segura
+MERIDIAN_ADMIN_JWT_SECRET=  # Opcional: gerado automaticamente se vazio
+
+# Ou via linha de comando
+./meridian-server --admin-user=admin --admin-password=sua_senha_segura
+```
+
+### Funcionalidades
+
+| Funcionalidade | Descricao |
+|----------------|-----------|
+| **Dashboard** | Metricas em tempo real (colecoes, objetos, memoria, pontos) |
+| **Mapa Interativo** | Visualizacao de objetos geoespaciais com OpenLayers |
+| **Colecoes** | Listagem e gerenciamento de colecoes |
+| **CRUD de Objetos** | Criar, visualizar e deletar objetos |
+| **Autenticacao** | Login seguro com JWT |
+
+### Acessando o Admin Panel
+
+```bash
+# Iniciar servidor com admin habilitado
+MERIDIAN_ADMIN_USER=admin MERIDIAN_ADMIN_PASSWORD=minhasenha ./meridian-server
+
+# Acessar no navegador
+http://localhost:9851/admin/
+```
+
+### API de Autenticacao
+
+O admin panel utiliza JWT para autenticacao:
+
+```bash
+# Login - retorna token JWT
+curl -X POST http://localhost:9851/admin/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"minhasenha"}'
+
+# Resposta
+{
+  "ok": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresAt": 1234567890,
+  "username": "admin"
+}
+
+# Verificar token
+curl http://localhost:9851/admin/api/verify \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+
+# Resposta
+{
+  "ok": true,
+  "username": "admin"
+}
+```
+
+### Arquitetura do Admin Panel
+
+```
++------------------+     +------------------+
+|   Navegador      |     |   Meridian       |
+|   (React/Next.js)|---->|   Server         |
++------------------+     +------------------+
+        |                        |
+        | GET /admin/            | Serve arquivos estaticos
+        | POST /admin/api/login  | Autenticacao JWT
+        | GET /admin/api/verify  | Validacao de token
+        |                        |
+        | GET /SERVER            | Metricas do servidor
+        | GET /KEYS *            | Lista colecoes
+        | GET /SCAN key          | Lista objetos
+        +------------------------+
+```
+
+### Build do Admin Panel (Desenvolvimento)
+
+Para modificar o admin panel:
+
+```bash
+# Entrar no diretorio do admin panel
+cd admin-panel
+
+# Instalar dependencias
+npm install
+
+# Desenvolvimento local
+npm run dev
+
+# Build para producao
+npm run build
+
+# Copiar para o servidor (script automatico)
+../scripts/build-admin.sh
+```
+
+### Tecnologias Utilizadas
+
+- **Frontend**: Next.js 14 + TypeScript
+- **UI**: shadcn/ui + Tailwind CSS
+- **Mapas**: OpenLayers
+- **Graficos**: Recharts
+- **Autenticacao**: JWT (HS256)
 
 ---
 

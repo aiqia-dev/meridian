@@ -17,6 +17,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"github.com/tidwall/gjson"
 	"github.com/aiqia-dev/meridian/core"
 	"github.com/aiqia-dev/meridian/internal/hservice"
@@ -26,6 +27,37 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
+
+// getEnv returns the value of an environment variable or a default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvInt returns the value of an environment variable as int or a default value
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if i, err := strconv.Atoi(value); err == nil {
+			return i
+		}
+	}
+	return defaultValue
+}
+
+// getEnvBool returns the value of an environment variable as bool or a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		switch strings.ToLower(value) {
+		case "1", "true", "yes":
+			return true
+		case "0", "false", "no":
+			return false
+		}
+	}
+	return defaultValue
+}
 
 // TODO: Set to false in 2.*
 var httpTransport = true
@@ -59,6 +91,9 @@ func (s *hserver) Send(ctx context.Context, in *hservice.MessageRequest) (*hserv
 }
 
 func main() {
+	// Load .env file if it exists (silent fail if not found)
+	_ = godotenv.Load()
+
 	gitsha := " (" + core.GitSHA + ")"
 	if gitsha == " (0000000)" {
 		gitsha = ""
@@ -77,13 +112,13 @@ Basic Options:
   -p port     : listening port (default: 9851)
   -d path     : data directory (default: data)
   -s socket   : listen on unix socket file
-  -l encoding : set log encoding to json or text (default: text) 
-  -o output   : auto set client output to json or resp (default: resp) 
+  -l encoding : set log encoding to json or text (default: text)
+  -o output   : auto set client output to json or resp (default: resp)
   -q          : no logging. totally silent output
   -v          : enable verbose logging
   -vv         : enable very verbose logging
 
-Advanced Options: 
+Advanced Options:
   --pidfile path          : file that contains the pid
   --appendonly yes/no     : AOF persistence (default: yes)
   --appendfilename path   : AOF path (default: data/appendonly.aof)
@@ -97,6 +132,15 @@ Developer Options:
   --dev                             : enable developer mode
   --webhook-http-consumer-port port : Start a test HTTP webhook server
   --webhook-grpc-consumer-port port : Start a test GRPC webhook server
+
+Environment Variables (can also be set in .env file):
+  MERIDIAN_HOST           : listening host
+  MERIDIAN_PORT           : listening port
+  MERIDIAN_DIR            : data directory
+  MERIDIAN_MAXMEMORY      : maximum memory limit (e.g., 1gb, 512mb)
+  MERIDIAN_REQUIREPASS    : authentication password
+  MERIDIAN_PROTECTED_MODE : yes/no
+  MERIDIAN_APPENDONLY     : yes/no
 
 `,
 		)
@@ -159,10 +203,10 @@ Developer Options:
 		showDebugMessages = false
 
 		// ProtectedMode forces Meridian to default in protected mode.
-		protectedMode = "no"
+		protectedMode = getEnv("MERIDIAN_PROTECTED_MODE", "no")
 
 		// AppendOnly allows for disabling the appendonly file.
-		appendOnly = true
+		appendOnly = getEnvBool("MERIDIAN_APPENDONLY", true)
 
 		// AppendFileName allows for custom appendonly file path
 		appendFileName = ""
@@ -291,28 +335,33 @@ Developer Options:
 	}
 	os.Args = nargs
 
-	metricsAddr := flag.String("metrics-addr", "", "The listening addr for Prometheus metrics.")
+	metricsAddr := flag.String("metrics-addr", getEnv("MERIDIAN_METRICS_ADDR", ""), "The listening addr for Prometheus metrics.")
 
 	var (
-		dir         string
-		port        int
-		host        string
-		unixSocket  string
-		verbose     bool
-		veryVerbose bool
-		logEncoding string
-		quiet       bool
-		pidfile     string
-		cpuprofile  string
-		memprofile  string
-		pprofport   int
+		dir            string
+		port           int
+		host           string
+		unixSocket     string
+		verbose        bool
+		veryVerbose    bool
+		logEncoding    string
+		quiet          bool
+		pidfile        string
+		cpuprofile     string
+		memprofile     string
+		pprofport      int
+		maxMemory      string
+		requirePass    string
+		adminUser      string
+		adminPassword  string
+		adminJWTSecret string
 	)
 
-	flag.IntVar(&port, "p", 9851, "The listening port")
+	flag.IntVar(&port, "p", getEnvInt("MERIDIAN_PORT", 9851), "The listening port")
 	flag.StringVar(&pidfile, "pidfile", "", "A file that contains the pid")
-	flag.StringVar(&host, "h", "", "The listening host")
+	flag.StringVar(&host, "h", getEnv("MERIDIAN_HOST", ""), "The listening host")
 	flag.StringVar(&unixSocket, "s", "", "Listen on a unix socket")
-	flag.StringVar(&dir, "d", "data", "The data directory")
+	flag.StringVar(&dir, "d", getEnv("MERIDIAN_DIR", "data"), "The data directory")
 	flag.StringVar(&logEncoding, "l", "text", "The log encoding json or text (default: text)")
 	flag.BoolVar(&verbose, "v", false, "Enable verbose logging")
 	flag.BoolVar(&quiet, "q", false, "Quiet logging. Totally silent")
@@ -320,6 +369,11 @@ Developer Options:
 	flag.IntVar(&pprofport, "pprofport", 0, "pprofport http at port")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&memprofile, "memprofile", "", "write memory profile to `file`")
+	flag.StringVar(&maxMemory, "maxmemory", getEnv("MERIDIAN_MAXMEMORY", ""), "Maximum memory limit (e.g., 1gb, 512mb)")
+	flag.StringVar(&requirePass, "requirepass", getEnv("MERIDIAN_REQUIREPASS", ""), "Authentication password")
+	flag.StringVar(&adminUser, "admin-user", getEnv("MERIDIAN_ADMIN_USER", ""), "Admin panel username")
+	flag.StringVar(&adminPassword, "admin-password", getEnv("MERIDIAN_ADMIN_PASSWORD", ""), "Admin panel password")
+	flag.StringVar(&adminJWTSecret, "admin-jwt-secret", getEnv("MERIDIAN_ADMIN_JWT_SECRET", ""), "Admin panel JWT secret")
 	flag.Parse()
 
 	if logEncoding == "json" {
@@ -510,6 +564,11 @@ Developer Options:
 		Shutdown:          shutdown,
 		Spinlock:          spinlock,
 		ClientOutput:      clientOutput,
+		MaxMemory:         maxMemory,
+		RequirePass:       requirePass,
+		AdminUser:         adminUser,
+		AdminPassword:     adminPassword,
+		AdminJWTSecret:    adminJWTSecret,
 	}
 	if err := server.Serve(opts); err != nil {
 		log.Fatal(err)

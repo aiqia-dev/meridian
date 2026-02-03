@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -33,6 +34,8 @@ import (
 	"github.com/tidwall/resp"
 	"github.com/tidwall/rtree"
 	"github.com/aiqia-dev/meridian/core"
+	"github.com/aiqia-dev/meridian/internal/admin"
+	"github.com/aiqia-dev/meridian/internal/backup"
 	"github.com/aiqia-dev/meridian/internal/collection"
 	"github.com/aiqia-dev/meridian/internal/deadline"
 	"github.com/aiqia-dev/meridian/internal/endpoint"
@@ -234,6 +237,9 @@ type Server struct {
 	// monitor connections (using the MONITOR command)
 	monconnsMu sync.RWMutex
 	monconns   map[net.Conn]bool
+
+	// backup manager
+	backupMgr *backup.Manager
 }
 
 // Options for Serve()
@@ -269,6 +275,30 @@ type Options struct {
 
 	// Spinlock uses a spinlock instead of a mutex
 	Spinlock bool
+
+	// MaxMemory sets the maximum memory limit (e.g., "1gb", "512mb")
+	MaxMemory string
+
+	// RequirePass sets the authentication password
+	RequirePass string
+
+	// AdminUser is the username for the admin panel
+	AdminUser string
+
+	// AdminPassword is the password for the admin panel
+	AdminPassword string
+
+	// AdminJWTSecret is the secret for signing JWT tokens
+	AdminJWTSecret string
+
+	// Backup configuration
+	BackupEnabled       bool
+	BackupProvider      string // "gcs", "local"
+	BackupBucket        string // bucket name for cloud providers, or path for local
+	BackupPrefix        string // prefix/folder for backups
+	BackupInterval      time.Duration
+	BackupRetentionDays int
+	BackupCompress      bool
 }
 
 // Serve starts a new meridian server
@@ -281,6 +311,12 @@ func Serve(opts Options) error {
 	}
 	if opts.ProtectedMode == "" {
 		opts.ProtectedMode = "no"
+	}
+
+	// Generate a random JWT secret if not provided
+	if opts.AdminJWTSecret == "" && opts.AdminUser != "" {
+		secret, _ := admin.GenerateRandomSecret()
+		opts.AdminJWTSecret = hex.EncodeToString(secret)
 	}
 
 	log.Infof("Server started, Meridian version %s, git %s", core.Version, core.GitSHA)
@@ -345,6 +381,20 @@ func Serve(opts Options) error {
 	s.config, err = loadConfig(filepath.Join(opts.Dir, "config"))
 	if err != nil {
 		return err
+	}
+
+	// Apply options from environment/command line (overrides config file)
+	if opts.MaxMemory != "" {
+		if err := s.config.setProperty(MaxMemory, opts.MaxMemory, false); err != nil {
+			return fmt.Errorf("invalid maxmemory value: %w", err)
+		}
+		log.Infof("MaxMemory set to %s", opts.MaxMemory)
+	}
+	if opts.RequirePass != "" {
+		if err := s.config.setProperty(RequirePass, opts.RequirePass, false); err != nil {
+			return fmt.Errorf("invalid requirepass value: %w", err)
+		}
+		log.Infof("RequirePass enabled")
 	}
 
 	// Send "500 Internal Server" error instead of "200 OK" for json responses
@@ -471,6 +521,29 @@ func Serve(opts Options) error {
 			s.flushAOF(false)
 			s.aof.Sync()
 		}()
+	}
+
+	// Initialize backup manager
+	if opts.BackupEnabled {
+		backupConfig := backup.Config{
+			Enabled:       opts.BackupEnabled,
+			Provider:      opts.BackupProvider,
+			Bucket:        opts.BackupBucket,
+			Prefix:        opts.BackupPrefix,
+			Interval:      opts.BackupInterval,
+			RetentionDays: opts.BackupRetentionDays,
+			Compress:      opts.BackupCompress,
+			AOFPath:       opts.AppendFileName,
+		}
+		backupMgr, err := backup.NewManager(backupConfig)
+		if err != nil {
+			log.Warnf("Backup: failed to initialize: %v", err)
+		} else {
+			s.backupMgr = backupMgr
+			s.backupMgr.Start()
+			defer s.backupMgr.Stop()
+			log.Infof("Backup: initialized with provider %s", opts.BackupProvider)
+		}
 	}
 
 	// Start background routines
@@ -972,6 +1045,39 @@ func (s *Server) handleInputCommand(client *Client, msg *Message) error {
 			msg.Args[0] == "viewer" {
 			return viewer.HandleHTTP(client, "/"+strings.Join(msg.Args, "/"),
 				s.opts.DevMode)
+		} else if strings.HasPrefix(msg.Args[0], "admin/") ||
+			msg.Args[0] == "admin" {
+			// Admin panel routes
+			adminConfig := admin.Config{
+				Username:  s.opts.AdminUser,
+				Password:  s.opts.AdminPassword,
+			}
+			if s.opts.AdminJWTSecret != "" {
+				adminConfig.JWTSecret, _ = admin.SecretFromString(s.opts.AdminJWTSecret)
+			} else {
+				adminConfig.JWTSecret, _ = admin.GenerateRandomSecret()
+			}
+
+			// Build the full path for routing
+			// Note: For POST requests, the body may be appended to Args[0] for
+			// backward compatibility. We need to extract just the URL path.
+			adminPath := "/" + msg.Args[0]
+			// Strip any body content that was appended to the path
+			if len(msg.Body) > 0 && strings.HasSuffix(adminPath, string(msg.Body)) {
+				adminPath = adminPath[:len(adminPath)-len(msg.Body)]
+			}
+
+			// Handle API endpoints
+			if adminPath == "/admin/api/login" && msg.ConnType == HTTP {
+				return admin.HandleAPILogin(client, msg.Body, adminConfig)
+			}
+			if adminPath == "/admin/api/verify" && msg.ConnType == HTTP {
+				return admin.HandleAPIVerify(client, msg.Auth, adminConfig)
+			}
+
+			// Serve static files
+			return admin.HandleHTTP(client, adminPath,
+				adminConfig, s.opts.DevMode)
 		}
 	}
 	serializeOutput := func(res resp.Value) (string, error) {
@@ -1567,6 +1673,7 @@ type Message struct {
 	Auth           string
 	AcceptEncoding string
 	Deadline       *deadline.Deadline
+	Body           []byte // HTTP request body
 }
 
 // Command returns the first argument as a lowercase string
@@ -1735,6 +1842,10 @@ func readNextHTTPCommand(packet []byte, argsIn [][]byte, msg *Message, wr io.Wri
 			if len(packet) < contentLength {
 				return false, nil
 			}
+			// Store body for API endpoints
+			msg.Body = make([]byte, contentLength)
+			copy(msg.Body, packet[:contentLength])
+			// Also append to path for backward compatibility
 			path += string(packet[:contentLength])
 			packet = packet[contentLength:]
 		}
