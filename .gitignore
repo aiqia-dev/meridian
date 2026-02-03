@@ -9,3 +9,8 @@ packages/
 # Ignore IDE folders
 .idea/
 .vscode/
+
+# Node.js
+node_modules/
+.next/
+out/
