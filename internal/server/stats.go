@@ -160,7 +160,7 @@ func (s *Server) cmdSERVER(msg *Message) (resp.Value, error) {
 	return resp.ArrayValue(respValuesSimpleMap(m)), nil
 }
 
-// basicStats populates the passed map with basic system/go/tile38 statistics
+// basicStats populates the passed map with basic system/go/meridian statistics
 func (s *Server) basicStats(m map[string]interface{}) {
 	m["id"] = s.config.serverID()
 	if s.config.followHost() != "" {
@@ -223,7 +223,7 @@ func (s *Server) basicStats(m map[string]interface{}) {
 	m["pending_events"] = nevents
 }
 
-// extStats populates the passed map with extended system/go/tile38 statistics
+// extStats populates the passed map with extended system/go/meridian statistics
 func (s *Server) extStats(m map[string]interface{}) {
 	n, _ := runtime.ThreadCreateProfile(nil)
 	mem := readMemStats()
@@ -288,13 +288,13 @@ func (s *Server) extStats(m map[string]interface{}) {
 	// the program started
 	m["gc_cpu_fraction"] = mem.GCCPUFraction
 
-	// Tile38 Stats
+	// Meridian Stats
 
 	// ID of the server
 	m["meridian_id"] = s.config.serverID()
 	// The process ID of the server
 	m["meridian_pid"] = os.Getpid()
-	// Version of Tile38 running
+	// Version of Meridian running
 	m["meridian_version"] = core.Version
 	// Maximum heap size allowed
 	m["meridian_max_heap_size"] = s.config.maxMemory()
@@ -308,15 +308,15 @@ func (s *Server) extStats(m map[string]interface{}) {
 	m["meridian_read_only"] = s.config.readOnly()
 	// Size of pointer
 	m["meridian_pointer_size"] = (32 << uintptr(uint64(^uintptr(0))>>63)) / 8
-	// Uptime of the Tile38 server in seconds
+	// Uptime of the Meridian server in seconds
 	m["meridian_uptime_in_seconds"] = time.Since(s.started).Seconds()
-	// Number of currently connected Tile38 clients
+	// Number of currently connected Meridian clients
 	s.connsmu.RLock()
 	m["meridian_connected_clients"] = len(s.conns)
 	s.connsmu.RUnlock()
 	// Whether or not a cluster is enabled
 	m["meridian_cluster_enabled"] = false
-	// Whether or not the Tile38 AOF is enabled
+	// Whether or not the Meridian AOF is enabled
 	m["meridian_aof_enabled"] = s.opts.AppendOnly
 	// Whether or not an AOF shrink is currently in progress
 	m["meridian_aof_rewrite_in_progress"] = s.shrinking

@@ -1,0 +1,36 @@
+services:
+  meridian:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: aiqia/meridian:latest
+    container_name: meridian
+    ports:
+      - "${MERIDIAN_PORT:-9851}:9851"
+    volumes:
+      - meridian-data:/data
+    environment:
+      - MERIDIAN_HOST=${MERIDIAN_HOST:-0.0.0.0}
+      - MERIDIAN_PORT=${MERIDIAN_PORT:-9851}
+      - MERIDIAN_PROTECTED_MODE=${MERIDIAN_PROTECTED_MODE:-no}
+      - MERIDIAN_APPENDONLY=${MERIDIAN_APPENDONLY:-yes}
+      - MERIDIAN_LOG_ENCODING=${MERIDIAN_LOG_ENCODING:-text}
+      - MERIDIAN_VERBOSE=${MERIDIAN_VERBOSE:-false}
+    command: >
+      meridian-server
+      -d /data
+      -h ${MERIDIAN_HOST:-0.0.0.0}
+      -p 9851
+      -l ${MERIDIAN_LOG_ENCODING:-text}
+      --protected-mode ${MERIDIAN_PROTECTED_MODE:-no}
+      --appendonly ${MERIDIAN_APPENDONLY:-yes}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "meridian-cli", "PING"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  meridian-data:

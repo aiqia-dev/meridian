@@ -132,8 +132,8 @@ func timeout_within_scripts_test(mc *mockServer) (err error) {
 
 	script1 := "return meridian.call('timeout', 10, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
 	script2 := "return meridian.call('timeout', 0.000001, 'SCAN', 'mykey', 'WHERE', 'foo', -1, 2, 'COUNT')"
-	sha1 := "27a364b4e46ef493f6b70371086c286e2d5b5f49"
-	sha2 := "2da9c05b54abfe870bdc8383a143f9d3aa656192"
+	sha1 := "483979dd9fef3cba8f5b8a74e35406fd6dbf48ae"
+	sha2 := "702965ac4e006221d03fb0c882a584aac95f711a"
 
 	return mc.DoBatch([][]interface{}{
 		{"SCRIPT LOAD", script1}, {sha1},
@@ -159,8 +159,8 @@ func scriptTimeoutNotSupportedErr(v interface{}) (resp, expect interface{}) {
 func timeout_no_writes_within_scripts_test(mc *mockServer) (err error) {
 	script1 := "return meridian.call('SET', 'mykey', 'myval', 'STRING', 'foo')"
 	script2 := "return meridian.call('timeout', 10, 'SET', 'mykey', 'myval', 'STRING', 'foo')"
-	sha1 := "393d0adff113fdda45e3b5aff93c188c30099f48"
-	sha2 := "5287c158d15eb53d800b7389d82df0d73b004bf1"
+	sha1 := "8132f3c8f50dbae714747eac73b58141ca301db4"
+	sha2 := "eb34c86187baadea42e5adea004290b3e28590c3"
 
 	return mc.DoBatch([][]interface{}{
 		{"SCRIPT LOAD", script1}, {sha1},

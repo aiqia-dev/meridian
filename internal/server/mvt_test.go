@@ -28,7 +28,7 @@ func TestMVTAddFeatureLineStringUsesAllPoints(t *testing.T) {
 	actual := mvtRender(tileX, tileY, tileZ, []mvtObj{{id: id, obj: line}})
 
 	var tile mvt.Tile
-	layer := tile.AddLayer("tile38")
+	layer := tile.AddLayer("meridian")
 	layer.SetExtent(4096)
 
 	f := layer.AddFeature(mvt.LineString)
@@ -67,7 +67,7 @@ func TestMVTAddFeatureLineStringTooShort(t *testing.T) {
 	actual := mvtRender(tileX, tileY, tileZ, []mvtObj{{id: "short", obj: line}})
 
 	var tile mvt.Tile
-	layer := tile.AddLayer("tile38")
+	layer := tile.AddLayer("meridian")
 	layer.SetExtent(4096)
 	_ = layer.AddFeature(mvt.LineString)
 

@@ -252,7 +252,7 @@ type Options struct {
 	// ShowDebugMessages allows for log.Debug to print to console.
 	ShowDebugMessages bool
 
-	// ProtectedMode forces Tile38 to default in protected mode.
+	// ProtectedMode forces Meridian to default in protected mode.
 	ProtectedMode string
 
 	// AppendOnly allows for disabling the appendonly file.
@@ -271,7 +271,7 @@ type Options struct {
 	Spinlock bool
 }
 
-// Serve starts a new tile38 server
+// Serve starts a new meridian server
 func Serve(opts Options) error {
 	if opts.AppendFileName == "" {
 		opts.AppendFileName = path.Join(opts.Dir, "appendonly.aof")
@@ -1495,7 +1495,7 @@ the command 'CONFIG SET protected-mode no' from the loopback interface by
 connecting to Meridian from the same host the server is running, however MAKE
 SURE Meridian is not publicly accessible from internet if you do so. Use CONFIG
 REWRITE to make this change permanent. 2) Alternatively you can just disable
-the protected mode by editing the Tile38 configuration file, and setting the
+the protected mode by editing the Meridian configuration file, and setting the
 protected mode option to 'no', and then restarting the server. 3) If you
 started the server manually just for testing, restart it with the
 '--protected-mode no' option. 4) Setup a bind address or an authentication

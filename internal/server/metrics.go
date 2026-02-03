@@ -57,8 +57,8 @@ var (
 
 func (s *Server) MetricsIndexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`<html><head>
-<title>Tile38 ` + core.Version + `</title></head>
-<body><h1>Tile38 ` + core.Version + `</h1>
+<title>Meridian ` + core.Version + `</title></head>
+<body><h1>Meridian ` + core.Version + `</h1>
 <p><a href='/metrics'>Metrics</a></p>
 </body></html>`))
 }

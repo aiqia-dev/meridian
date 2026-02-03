@@ -1,0 +1,29 @@
+FROM golang:1.22-alpine AS builder
+
+RUN apk add --no-cache git bash
+
+WORKDIR /src
+COPY . .
+
+RUN git config --global --add safe.directory /src && \
+    git tag v0.0.0-dev 2>/dev/null || true
+
+RUN make
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=builder /src/meridian-server /usr/local/bin/
+COPY --from=builder /src/meridian-cli /usr/local/bin/
+COPY --from=builder /src/meridian-benchmark /usr/local/bin/
+
+RUN addgroup -S meridian && \
+    adduser -S -G meridian meridian && \
+    mkdir /data && chown meridian:meridian /data
+
+USER meridian
+VOLUME /data
+EXPOSE 9851
+
+CMD ["meridian-server", "-d", "/data"]

@@ -96,7 +96,7 @@ func mvtAddFeature(l *mvt.Layer, tileX, tileY, tileZ int, o mvtObj) {
 
 func mvtRender(tileX, tileY, tileZ int, objs []mvtObj) []byte {
 	var tile mvt.Tile
-	l := tile.AddLayer("tile38")
+	l := tile.AddLayer("meridian")
 	l.SetExtent(4096)
 	for _, obj := range objs {
 		mvtAddFeature(l, tileX, tileY, tileZ, obj)

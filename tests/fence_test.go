@@ -178,7 +178,7 @@ func fence_channel_message_order_test(mc *mockServer) error {
 	var ready atomic.Bool
 	// Concurrently subscribe for notifications
 	go func() {
-		// Create the subscription connection to Tile38 to subscribe for updates
+		// Create the subscription connection to Meridian to subscribe for updates
 		sc, err := redis.Dial("tcp", fmt.Sprintf(":%d", mc.port))
 		if err != nil {
 			log.Println(err)
