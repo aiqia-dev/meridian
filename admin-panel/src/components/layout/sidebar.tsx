@@ -12,6 +12,7 @@ import {
   ChevronUp,
   User2,
   BookOpen,
+  Truck,
 } from "lucide-react";
 import { logout } from "@/lib/api";
 
@@ -40,6 +41,7 @@ const navigation = [
   { name: "Map", href: "/map/", icon: Map },
   { name: "Collections", href: "/collections/", icon: Database },
   { name: "Webhooks", href: "/webhooks/", icon: Webhook },
+  { name: "TMS Guide", href: "/guide/", icon: Truck },
   { name: "About", href: "/about/", icon: BookOpen },
 ];
 

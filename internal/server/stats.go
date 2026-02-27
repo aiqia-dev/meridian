@@ -23,6 +23,56 @@ var memStats runtime.MemStats
 var memStatsMu sync.Mutex
 var memStatsBG bool
 
+// SystemMemInfo holds system memory information
+type SystemMemInfo struct {
+	Total     uint64
+	Free      uint64
+	Available uint64
+	Used      uint64
+}
+
+// readSystemMemInfo reads system memory info from /proc/meminfo (Linux)
+func readSystemMemInfo() SystemMemInfo {
+	info := SystemMemInfo{}
+
+	data, err := os.ReadFile("/proc/meminfo")
+	if err != nil {
+		return info
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		key := strings.TrimSuffix(fields[0], ":")
+		value, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		// Values in /proc/meminfo are in kB
+		value *= 1024
+
+		switch key {
+		case "MemTotal":
+			info.Total = value
+		case "MemFree":
+			info.Free = value
+		case "MemAvailable":
+			info.Available = value
+		}
+	}
+
+	if info.Total > 0 {
+		info.Used = info.Total - info.Available
+	}
+
+	return info
+}
+
 // ReadMemStats returns the latest memstats. It provides an instant response.
 func readMemStats() runtime.MemStats {
 	memStatsMu.Lock()
@@ -221,6 +271,13 @@ func (s *Server) basicStats(m map[string]interface{}) {
 		return nil
 	})
 	m["pending_events"] = nevents
+
+	// System memory info
+	sysMemInfo := readSystemMemInfo()
+	m["sys_mem_total"] = sysMemInfo.Total
+	m["sys_mem_free"] = sysMemInfo.Free
+	m["sys_mem_available"] = sysMemInfo.Available
+	m["sys_mem_used"] = sysMemInfo.Used
 }
 
 // extStats populates the passed map with extended system/go/meridian statistics

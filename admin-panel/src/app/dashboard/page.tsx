@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { StatsChart } from "@/components/dashboard/stats-chart";
+import { executeCommand } from "@/lib/api";
 import {
   Database,
   HardDrive,
@@ -11,7 +12,7 @@ import {
   Clock,
   Layers,
   MapPin,
-  MemoryStick,
+  Server,
 } from "lucide-react";
 
 interface ServerStats {
@@ -29,6 +30,10 @@ interface ServerStats {
   cpus: number;
   max_heap_size: number;
   heap_released: number;
+  sys_mem_total: number;
+  sys_mem_free: number;
+  sys_mem_available: number;
+  sys_mem_used: number;
 }
 
 export default function DashboardPage() {
@@ -41,23 +46,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // For now, fetch from the main server endpoint
-        const response = await fetch("/SERVER");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.ok && data.stats) {
-            setStats(data.stats);
-            // Add to memory history
-            const now = new Date();
-            const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-            setMemoryHistory((prev) => {
-              const newHistory = [
-                ...prev,
-                { time: timeStr, value: data.stats.heap_size / (1024 * 1024) },
-              ];
-              return newHistory.slice(-20); // Keep last 20 points
-            });
-          }
+        const data = await executeCommand("SERVER");
+        if (data.ok && data.stats) {
+          setStats(data.stats);
+          // Add to memory history
+          const now = new Date();
+          const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
+          setMemoryHistory((prev) => {
+            const newHistory = [
+              ...prev,
+              { time: timeStr, value: data.stats.heap_size / (1024 * 1024) },
+            ];
+            return newHistory.slice(-20); // Keep last 20 points
+          });
         }
       } catch (err) {
         console.error("Failed to fetch stats:", err);
@@ -127,18 +128,14 @@ export default function DashboardPage() {
             icon={HardDrive}
           />
           <MetricCard
-            title="Memory Available"
-            value={
-              stats?.max_heap_size && stats.max_heap_size > 0
-                ? formatBytes(Math.max(0, stats.max_heap_size - (stats?.heap_size ?? 0)))
-                : formatBytes(stats?.heap_released ?? 0)
-            }
+            title="System Memory"
+            value={formatBytes(stats?.sys_mem_available ?? 0)}
             description={
-              stats?.max_heap_size && stats.max_heap_size > 0
-                ? `of ${formatBytes(stats.max_heap_size)} limit`
-                : "Released to OS"
+              stats?.sys_mem_total
+                ? `${formatBytes(stats.sys_mem_total)} total`
+                : "Available RAM"
             }
-            icon={MemoryStick}
+            icon={Server}
           />
           <MetricCard
             title="Points"

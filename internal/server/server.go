@@ -1059,13 +1059,7 @@ func (s *Server) handleInputCommand(client *Client, msg *Message) error {
 			}
 
 			// Build the full path for routing
-			// Note: For POST requests, the body may be appended to Args[0] for
-			// backward compatibility. We need to extract just the URL path.
 			adminPath := "/" + msg.Args[0]
-			// Strip any body content that was appended to the path
-			if len(msg.Body) > 0 && strings.HasSuffix(adminPath, string(msg.Body)) {
-				adminPath = adminPath[:len(adminPath)-len(msg.Body)]
-			}
 
 			// Handle API endpoints
 			if adminPath == "/admin/api/login" && msg.ConnType == HTTP {
@@ -1073,6 +1067,30 @@ func (s *Server) handleInputCommand(client *Client, msg *Message) error {
 			}
 			if adminPath == "/admin/api/verify" && msg.ConnType == HTTP {
 				return admin.HandleAPIVerify(client, msg.Auth, adminConfig)
+			}
+			if adminPath == "/admin/api/command" && msg.ConnType == HTTP {
+				// Validate auth token
+				_, err := admin.ValidateCommandAuth(msg.Auth, adminConfig)
+				if err != nil {
+					return admin.WriteUnauthorizedResponse(client)
+				}
+
+				// Parse command from body
+				command, err := admin.ParseCommandRequest(msg.Body)
+				if err != nil {
+					return admin.WriteBadRequestResponse(client, err.Error())
+				}
+
+				// Parse the command into args
+				cmdMsg, err := readNativeMessageLine([]byte(command))
+				if err != nil {
+					return admin.WriteBadRequestResponse(client, "invalid command format")
+				}
+
+				// Execute the command with JSON output
+				cmdMsg.ConnType = HTTP
+				cmdMsg.OutputType = JSON
+				return s.handleInputCommand(client, cmdMsg)
 			}
 
 			// Serve static files
@@ -1845,8 +1863,11 @@ func readNextHTTPCommand(packet []byte, argsIn [][]byte, msg *Message, wr io.Wri
 			// Store body for API endpoints
 			msg.Body = make([]byte, contentLength)
 			copy(msg.Body, packet[:contentLength])
-			// Also append to path for backward compatibility
-			path += string(packet[:contentLength])
+			// Only append to path for backward compatibility if NOT an admin API endpoint
+			// Admin API endpoints use JSON bodies that shouldn't be appended to the path
+			if !strings.HasPrefix(path, "admin/api/") {
+				path += string(packet[:contentLength])
+			}
 			packet = packet[contentLength:]
 		}
 		if path == "" {

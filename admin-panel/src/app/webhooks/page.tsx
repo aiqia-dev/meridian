@@ -35,6 +35,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { CliExample } from "@/components/ui/cli-example";
+import { executeCommand } from "@/lib/api";
 
 interface Hook {
   name: string;
@@ -95,14 +96,11 @@ export default function WebhooksPage() {
   const fetchHooks = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/HOOKS *");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.hooks) {
-          setHooks(data.hooks);
-        } else {
-          setHooks([]);
-        }
+      const data = await executeCommand("HOOKS *");
+      if (data.ok && data.hooks) {
+        setHooks(data.hooks);
+      } else {
+        setHooks([]);
       }
     } catch (err) {
       console.error("Failed to fetch hooks:", err);
@@ -113,12 +111,9 @@ export default function WebhooksPage() {
 
   const fetchCollections = async () => {
     try {
-      const response = await fetch("/KEYS *");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.keys) {
-          setCollections(data.keys.map((key: string) => ({ key })));
-        }
+      const data = await executeCommand("KEYS *");
+      if (data.ok && data.keys) {
+        setCollections(data.keys.map((key: string) => ({ key })));
       }
     } catch (err) {
       console.error("Failed to fetch collections:", err);
@@ -133,14 +128,11 @@ export default function WebhooksPage() {
 
     setLoadingGeofenceObjects(true);
     try {
-      const response = await fetch(`/SCAN ${collectionKey}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.objects) {
-          setGeofenceObjects(data.objects);
-        } else {
-          setGeofenceObjects([]);
-        }
+      const data = await executeCommand(`SCAN ${collectionKey}`);
+      if (data.ok && data.objects) {
+        setGeofenceObjects(data.objects);
+      } else {
+        setGeofenceObjects([]);
       }
     } catch (err) {
       console.error("Failed to fetch geofence objects:", err);
@@ -193,24 +185,19 @@ export default function WebhooksPage() {
 
       if (geofenceSource === "object") {
         // SETHOOK name endpoint WITHIN|INTERSECTS key FENCE DETECT detect GET geofenceKey geofenceId
-        command = `/SETHOOK ${newHookName} ${newHookEndpoint} ${newHookType} ${newHookCollection} FENCE ${detectClause} GET ${geofenceCollection} ${geofenceObjectId}`;
+        command = `SETHOOK ${newHookName} ${newHookEndpoint} ${newHookType} ${newHookCollection} FENCE ${detectClause} GET ${geofenceCollection} ${geofenceObjectId}`;
       } else {
         // SETHOOK name endpoint WITHIN|INTERSECTS key FENCE DETECT detect BOUNDS minlat minlon maxlat maxlon
-        command = `/SETHOOK ${newHookName} ${newHookEndpoint} ${newHookType} ${newHookCollection} FENCE ${detectClause} BOUNDS ${newHookBounds.minLat} ${newHookBounds.minLon} ${newHookBounds.maxLat} ${newHookBounds.maxLon}`;
+        command = `SETHOOK ${newHookName} ${newHookEndpoint} ${newHookType} ${newHookCollection} FENCE ${detectClause} BOUNDS ${newHookBounds.minLat} ${newHookBounds.minLon} ${newHookBounds.maxLat} ${newHookBounds.maxLon}`;
       }
 
-      const response = await fetch(command);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok) {
-          await fetchHooks();
-          setShowCreateHook(false);
-          resetHookForm();
-        } else {
-          setHookError(data.err || "Failed to create webhook");
-        }
+      const data = await executeCommand(command);
+      if (data.ok) {
+        await fetchHooks();
+        setShowCreateHook(false);
+        resetHookForm();
       } else {
-        setHookError("Failed to create webhook");
+        setHookError(data.err || "Failed to create webhook");
       }
     } catch (err) {
       console.error("Failed to create hook:", err);
@@ -230,8 +217,8 @@ export default function WebhooksPage() {
 
     setDeletingHook(true);
     try {
-      const response = await fetch(`/DELHOOK ${hookToDelete}`);
-      if (response.ok) {
+      const result = await executeCommand(`DELHOOK ${hookToDelete}`);
+      if (result.ok) {
         await fetchHooks();
         setShowDeleteHook(false);
         setHookToDelete(null);

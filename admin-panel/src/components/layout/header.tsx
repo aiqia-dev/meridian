@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   const [username, setUsername] = useState("");
@@ -19,7 +20,8 @@ export function Header() {
         <h2 className="text-lg font-semibold">Geospatial Database Administration</h2>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
         <button className="p-2 rounded-md hover:bg-accent transition-colors">
           <Bell className="w-5 h-5 text-muted-foreground" />
         </button>

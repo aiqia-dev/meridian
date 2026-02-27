@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { HelpTooltip, LabelWithHelp } from "@/components/ui/help-tooltip";
 import { CliExample } from "@/components/ui/cli-example";
+import { executeCommand } from "@/lib/api";
 
 // Dynamic import to avoid SSR issues with OpenLayers
 const MapDrawer = dynamic(
@@ -126,33 +127,27 @@ export default function CollectionsPage() {
   const fetchCollections = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/KEYS *");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.keys) {
-          // Get stats for each collection
-          const collectionsWithStats: Collection[] = await Promise.all(
-            data.keys.map(async (key: string) => {
-              try {
-                const statsResponse = await fetch(`/STATS ${key}`);
-                if (statsResponse.ok) {
-                  const stats = await statsResponse.json();
-                  if (stats.ok && stats.stats && stats.stats[0]) {
-                    return {
-                      key,
-                      count: stats.stats[0].num_objects || 0,
-                      in_memory_size: stats.stats[0].in_memory_size || 0,
-                    };
-                  }
-                }
-              } catch {}
-              return { key, count: 0, in_memory_size: 0 };
-            })
-          );
-          setCollections(collectionsWithStats);
-        } else {
-          setCollections([]);
-        }
+      const data = await executeCommand("KEYS *");
+      if (data.ok && data.keys) {
+        // Get stats for each collection
+        const collectionsWithStats: Collection[] = await Promise.all(
+          data.keys.map(async (key: string) => {
+            try {
+              const stats = await executeCommand(`STATS ${key}`);
+              if (stats.ok && stats.stats && stats.stats[0]) {
+                return {
+                  key,
+                  count: stats.stats[0].num_objects || 0,
+                  in_memory_size: stats.stats[0].in_memory_size || 0,
+                };
+              }
+            } catch {}
+            return { key, count: 0, in_memory_size: 0 };
+          })
+        );
+        setCollections(collectionsWithStats);
+      } else {
+        setCollections([]);
       }
     } catch (err) {
       console.error("Failed to fetch collections:", err);
@@ -164,15 +159,11 @@ export default function CollectionsPage() {
   const fetchObjects = async (key: string) => {
     setObjectsLoading(true);
     try {
-      // Use WITHFIELDS to get field values along with objects
-      const response = await fetch(`/SCAN ${key} WITHFIELDS LIMIT 100`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.objects) {
-          setObjects(data.objects);
-        } else {
-          setObjects([]);
-        }
+      const data = await executeCommand(`SCAN ${key} LIMIT 100`);
+      if (data.ok && data.objects) {
+        setObjects(data.objects);
+      } else {
+        setObjects([]);
       }
     } catch (err) {
       console.error("Failed to fetch objects:", err);
@@ -188,12 +179,12 @@ export default function CollectionsPage() {
     try {
       // Create collection by adding a temporary object and then optionally keeping it
       // Collections are created implicitly when first object is added
-      const response = await fetch(
-        `/SET ${newCollectionName} __init__ POINT 0 0`
+      const result = await executeCommand(
+        `SET ${newCollectionName} __init__ POINT 0 0`
       );
-      if (response.ok) {
+      if (result.ok) {
         // Delete the init object
-        await fetch(`/DEL ${newCollectionName} __init__`);
+        await executeCommand(`DEL ${newCollectionName} __init__`);
         await fetchCollections();
         setSelectedCollection(newCollectionName);
         setShowCreateCollection(false);
@@ -211,8 +202,8 @@ export default function CollectionsPage() {
 
     setDeletingCollection(true);
     try {
-      const response = await fetch(`/DROP ${selectedCollection}`);
-      if (response.ok) {
+      const result = await executeCommand(`DROP ${selectedCollection}`);
+      if (result.ok) {
         await fetchCollections();
         setSelectedCollection(null);
         setObjects([]);
@@ -239,7 +230,7 @@ export default function CollectionsPage() {
         .join(" ");
 
       let command = "";
-      const baseCmd = `/SET ${selectedCollection} ${newObjectId}`;
+      const baseCmd = `SET ${selectedCollection} ${newObjectId}`;
       const fieldsCmd = fieldsStr ? ` ${fieldsStr}` : "";
 
       if (newObjectType === "Point") {
@@ -273,19 +264,14 @@ export default function CollectionsPage() {
         command = `${baseCmd}${fieldsCmd} OBJECT ${geojsonStr}`;
       }
 
-      const response = await fetch(command);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok) {
-          await fetchObjects(selectedCollection);
-          await fetchCollections();
-          setShowCreateObject(false);
-          resetObjectForm();
-        } else {
-          setObjectError(data.err || "Failed to create object");
-        }
+      const data = await executeCommand(command);
+      if (data.ok) {
+        await fetchObjects(selectedCollection);
+        await fetchCollections();
+        setShowCreateObject(false);
+        resetObjectForm();
       } else {
-        setObjectError("Failed to create object");
+        setObjectError(data.err || "Failed to create object");
       }
     } catch (err) {
       console.error("Failed to create object:", err);
@@ -338,17 +324,14 @@ export default function CollectionsPage() {
 
     try {
       // Use INTERSECTS command to find objects that contain the point
-      const response = await fetch(
-        `/INTERSECTS ${selectedCollection} POINT ${testPointLat} ${testPointLon}`
+      const data = await executeCommand(
+        `INTERSECTS ${selectedCollection} POINT ${testPointLat} ${testPointLon}`
       );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok) {
-          setTestPointResult({
-            tested: true,
-            matches: data.objects || [],
-          });
-        }
+      if (data.ok) {
+        setTestPointResult({
+          tested: true,
+          matches: data.objects || [],
+        });
       }
     } catch (err) {
       console.error("Failed to test point:", err);
@@ -373,8 +356,8 @@ export default function CollectionsPage() {
 
     setDeletingObject(true);
     try {
-      const response = await fetch(`/DEL ${objectToDelete.key} ${objectToDelete.id}`);
-      if (response.ok) {
+      const result = await executeCommand(`DEL ${objectToDelete.key} ${objectToDelete.id}`);
+      if (result.ok) {
         setObjects((prev) => prev.filter((obj) => obj.id !== objectToDelete.id));
         await fetchCollections();
         setShowDeleteObject(false);

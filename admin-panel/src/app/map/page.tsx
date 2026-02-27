@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { MapView } from "@/components/map/map-view";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { executeCommand } from "@/lib/api";
 import { RefreshCw, Layers } from "lucide-react";
 
 interface Collection {
@@ -38,16 +39,13 @@ export default function MapPage() {
 
   const fetchCollections = async () => {
     try {
-      const response = await fetch("/KEYS *");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.keys) {
-          setCollections(
-            data.keys.map((k: string) => ({ key: k, count: 0 }))
-          );
-          if (data.keys.length > 0) {
-            setSelectedCollection(data.keys[0]);
-          }
+      const data = await executeCommand("KEYS *");
+      if (data.ok && data.keys) {
+        setCollections(
+          data.keys.map((k: string) => ({ key: k, count: 0 }))
+        );
+        if (data.keys.length > 0) {
+          setSelectedCollection(data.keys[0]);
         }
       }
     } catch (err) {
@@ -59,19 +57,16 @@ export default function MapPage() {
 
   const fetchObjects = async (key: string) => {
     try {
-      const response = await fetch(`/SCAN ${key} LIMIT 1000`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.objects) {
-          const geoObjects: GeoObject[] = data.objects
-            .filter((obj: any) => obj.object?.type)
-            .map((obj: any) => ({
-              id: obj.id,
-              type: obj.object.type,
-              coordinates: obj.object.coordinates,
-            }));
-          setObjects(geoObjects);
-        }
+      const data = await executeCommand(`SCAN ${key} LIMIT 1000`);
+      if (data.ok && data.objects) {
+        const geoObjects: GeoObject[] = data.objects
+          .filter((obj: any) => obj.object?.type)
+          .map((obj: any) => ({
+            id: obj.id,
+            type: obj.object.type,
+            coordinates: obj.object.coordinates,
+          }));
+        setObjects(geoObjects);
       }
     } catch (err) {
       console.error("Failed to fetch objects:", err);

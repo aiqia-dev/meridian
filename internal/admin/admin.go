@@ -203,3 +203,52 @@ func writeJSONResponse(wr io.Writer, status string, data interface{}) error {
 	}
 	return writeHTTPResponse(wr, status, "application/json", nil, body)
 }
+
+// CommandRequest represents a command execution request
+type CommandRequest struct {
+	Command string `json:"command"`
+}
+
+// ValidateCommandAuth validates the JWT token from the Authorization header
+// Returns the username if valid, or an error if not
+func ValidateCommandAuth(authHeader string, config Config) (string, error) {
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if token == authHeader || token == "" {
+		return "", fmt.Errorf("missing or invalid authorization header")
+	}
+
+	claims, err := ValidateJWT(token, config.JWTSecret)
+	if err != nil {
+		return "", fmt.Errorf("invalid or expired token")
+	}
+
+	return claims.Username, nil
+}
+
+// ParseCommandRequest parses the command from the request body
+func ParseCommandRequest(body []byte) (string, error) {
+	var req CommandRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return "", fmt.Errorf("invalid request body")
+	}
+	if req.Command == "" {
+		return "", fmt.Errorf("command is required")
+	}
+	return req.Command, nil
+}
+
+// WriteUnauthorizedResponse writes a 401 Unauthorized response
+func WriteUnauthorizedResponse(wr io.Writer) error {
+	return writeJSONResponse(wr, "401 Unauthorized", map[string]interface{}{
+		"ok":    false,
+		"error": "Unauthorized",
+	})
+}
+
+// WriteBadRequestResponse writes a 400 Bad Request response
+func WriteBadRequestResponse(wr io.Writer, message string) error {
+	return writeJSONResponse(wr, "400 Bad Request", map[string]interface{}{
+		"ok":    false,
+		"error": message,
+	})
+}
